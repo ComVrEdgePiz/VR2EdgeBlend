@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<compiz>
+  <plugin name="edgeblend" useBcop="true">
+    <_short>Edgeblend</_short>
+    <_long>An edgeblending plugin, with gridsupport </_long>
+    <category>General</category>
+    <display>
+      <group>
+        <_short>Main</_short>
+        <option name="reload" type="key">
+          <_short>reload</_short>
+          <_long>Force a config reload.</_long>
+          <default>&lt;Control&gt;F11</default>
+        </option>
+        <option name="config" type="string">
+          <_short>Config File</_short>
+          <_long>Config File.</_long>
+          <hints>file;</hints>
+          <default></default>
+        </option>
+      </group>
+      <group>
+        <_short>devel</_short>
+        <option name="auto reload" type="bool">
+          <_short>reloads config for each draw</_short>
+          <_long>reloads config for each draw</_long>
+          <default>false</default>
+        </option>
+        <option name="show areas" type="bool">
+          <_short>shows areas</_short>
+          <_long>shows areas</_long>
+          <default>false</default>
+        </option>
+      </group>
+    </display>
+  </plugin>
+</compiz>
