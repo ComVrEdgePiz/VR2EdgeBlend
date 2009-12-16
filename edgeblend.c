@@ -25,9 +25,10 @@
 #include <X11/Xatom.h>
 #include <GL/glu.h>
 #include "edgeblend_options.h"
+#include "debug.h"
 #include "blend.h"
 #include "edge.h"
-
+#include "parser.h"
 
 #define EDGEBLEND_BACKGROUND_DEFAULT ""
 #define EDGEBLEND_LOGO_DEFAULT ""
@@ -56,12 +57,24 @@ edgeblendDisplay;
 
 typedef struct _edgeblendScreen
 {
-    PreparePaintScreenProc preparePaintScreen;
-    DonePaintScreenProc    donePaintScreen;
-    PaintOutputProc        paintOutput;
+    /* WRAP-Procs */
+    PreparePaintScreenProc      preparePaintScreen;
+    DonePaintScreenProc         donePaintScreen;
+    PaintOutputProc             paintOutput;
+    PaintTransformedOutputProc  paintTransformedOutput;
+    PaintScreenProc             paintScreen;
 }
 edgeblendScreen;
 
+typedef struct _backBuffer {
+    int x;
+    int y;
+    int h;
+    int w;
+    GLubyte * buffer;
+} backBuffer;
+
+backBuffer *myBackBuffer;
 
 
 /**
@@ -115,6 +128,37 @@ edgeblendGetCurrentOutputRect (CompScreen *s,
 
 }
 
+
+static void
+edgeblendPaintScreen (CompScreen   *s,
+	     CompOutput   *outputs,
+	     int          numOutputs,
+	     unsigned int mask)
+{
+    /*compLogMessage ("edgeblend", CompLogLevelInfo,"painting screen with mask: %d and #Outputs %d",mask,numOutputs);*/
+    EDGEBLEND_SCREEN (s);
+
+    UNWRAP (ebs, s, paintScreen);
+	(*s->paintScreen) (s, outputs, numOutputs, mask);
+    WRAP (ebs, s, paintScreen, edgeblendPaintScreen);
+}
+//
+static void
+edgeblendPaintTransformedOutput (CompScreen              *s,
+		   const ScreenPaintAttrib *sa,
+		   const CompTransform     *transform,
+		   Region                  region,
+		   CompOutput              *output,
+		   unsigned int            mask)
+{
+    EDGEBLEND_SCREEN (s);
+    //compLogMessage ("edgeblend", CompLogLevelInfo,"painting transformedoutput %s (%d) with mask %d", output->name, output->id,mask);
+    printOutputdev(output);
+    UNWRAP (ebs, s, paintTransformedOutput);
+        (*s->paintTransformedOutput) (s, sa, transform, region, output, mask);
+    WRAP (ebs, s, paintOutput, paintTransformedOutput);
+}
+
 static Bool
 edgeblendPaintOutput (CompScreen              *s,
 		   const ScreenPaintAttrib *sa,
@@ -128,38 +172,81 @@ edgeblendPaintOutput (CompScreen              *s,
     CompDisplay *d = s->display;
     CompTransform sTransform = *transform;
 
+    //compLogMessage ("edgeblend", CompLogLevelInfo,"painting output %s (%d) with mask %d", output->name, output->id,mask);
+    //printOutputdev(output);
     Bool status = TRUE;
     float x,y;
     float alpha = 0.5;
+    int i = 0;
+    GLubyte * buffer;
 
+    unsigned int mymask = PAINT_SCREEN_REGION_MASK | PAINT_SCREEN_TRANSFORMED_MASK | PAINT_SCREEN_FULL_MASK;
+    makeScreenCurrent (s);
     UNWRAP (ebs, s, paintOutput);
     status = (*s->paintOutput) (s, sa, transform, region, output, mask);
     WRAP (ebs, s, paintOutput, edgeblendPaintOutput);
 
-    transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &sTransform);
-
-    glPushMatrix ();       
+    if (output->id != ~0) {
+    //compLogMessage ("edgeblend", CompLogLevelInfo,"painting screen %d on output %s (%d)", s->screenNum,output->name, output->id);
+    //compLogMessage ("edgeblend", CompLogLevelInfo,"\t %d/%d %d/%d rect ", region->extents.x1, region->extents.y1, region->extents.x2, region->extents.y2);
+    printOutputdev(output);
+    
+    
+        transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &sTransform);
         glLoadMatrixf (sTransform.m);
+
+        if (myBackBuffer->buffer) {
+            compLogMessage ("edgeblend", CompLogLevelInfo,"try writing buffers back");
+            glRasterPos2i(myBackBuffer->x + 10, myBackBuffer->y+ 10);
+            glDrawPixels(myBackBuffer->w-10, myBackBuffer->h -10, GL_RGBA, GL_UNSIGNED_BYTE, myBackBuffer->buffer);
+            free (myBackBuffer->buffer);
+            myBackBuffer->buffer = NULL;
+            compLogMessage ("edgeblend", CompLogLevelInfo,"writing buffers back");
+        }
+
+            compLogMessage ("edgeblend", CompLogLevelInfo,"try read buffers");
+            buffer = (GLubyte *)malloc (sizeof (GLubyte) * output->width * output->height * 4);
+            glReadPixels (output->region.extents.x1, output->region.extents.y1, output->width, output->height,
+                  GL_RGBA, GL_UNSIGNED_BYTE,
+                  (GLvoid *) buffer);
+            myBackBuffer->x = output->region.extents.x1;
+            myBackBuffer->y = output->region.extents.y1;
+            myBackBuffer->w = output->width;
+            myBackBuffer->h = output->height;
+            myBackBuffer->buffer = buffer;
+            compLogMessage ("edgeblend", CompLogLevelInfo,"read buffers");
+        glPushMatrix ();
         glPushAttrib(GL_COLOR_BUFFER_BIT);
             glEnable (GL_BLEND);
             glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glColor4f (0.5, 0.5, 0.5, alpha);
+            if (output->id == 0) {
+                glColor4f (0.5, 0.5, 0.5, 0.75);
+            } else {
+                glColor4f (0.0, 0.5, 0.5, 0.75);
+            }
 
-            x = (s->width  - 100) / 2;
-            y = (s->height - 100) / 2;
+           
+                   x = output->region.extents.x1;
+                   y = output->region.extents.y1;
 
-            glBegin(GL_QUADS);
-                glVertex2f(x,       y);
-                glVertex2f(x+100.0, y);
-                glVertex2f(x,       y+100.0);
-                glVertex2f(x+100.0, y+100.0);
-            glEnd();
+                   //compLogMessage ("edgeblend", CompLogLevelInfo,"painting screen %d output: %d -> x: %f y: %f",s->screenNum,s->outputDev[i].id,x,y);
 
+                    glBegin(GL_QUADS);
+                        glVertex2f(x,       y);
+                        glVertex2f(x+100.0, y);
+                        glVertex2f(x,       y+100.0);
+                        glVertex2f(x+100.0, y+100.0);
+                    glEnd();
+
+
+            glDisable(GL_BLEND);
         glPopAttrib();
         glColor4usv (defaultColor);
     glPopMatrix ();
+    }
     return status;
 }
+
 
 /**
  * Run after drawing the screen, enabled forcing redraws by damaging the screen
@@ -200,6 +287,20 @@ edgeblendLoadConfig (CompDisplay     *d,
     return FALSE;
 }
 
+/** OPTIONS **/
+void edgeblendNotifyCallback(CompDisplay *display, CompOption *opt, EdgeblendDisplayOptions num)
+{
+    switch (num) {
+        case EdgeblendDisplayOptionConfig:
+            compLogMessage ("edgeblend", CompLogLevelInfo,"edgeblendNotifyCallback called on option config");
+            compLogMessage ("edgeblend", CompLogLevelInfo," %d",load_config(opt->value.s));
+            break;
+        default:
+            compLogMessage ("edgeblend", CompLogLevelInfo,"edgeblendNotifyCallback called on option %d", num);
+            break;
+    }
+}
+
 
 /******************************************************************************/
 /*                                                                            */
@@ -207,14 +308,29 @@ edgeblendLoadConfig (CompDisplay     *d,
 /*                                                                            */
 /******************************************************************************/
 static Bool
-edgeblendInitScreen (CompPlugin *p,
-		  CompScreen *s)
+edgeblendInitScreen (CompPlugin *plugin,
+		     CompScreen *screen)
 {
     compLogMessage ("edgeblend", CompLogLevelInfo, 
                     "edgeblendInitScreen called on ScreenNum %d (x: %d y: %d, height: %d, width: %d)",
-                    s->screenNum, s->x, s->y, s->height, s->width
+                    screen->screenNum, screen->x, screen->y, screen->height, screen->width
                    );
-    EDGEBLEND_DISPLAY (s->display);
+    compLogMessage ("edgeblend", CompLogLevelInfo,
+                    "edgeblendInitScreen called on ScreenNum %d, is has %d outputdevices (current %d)",
+                    screen->screenNum, screen->nOutputDev, screen->currentOutputDev
+                   );
+    int i = 0;
+    while (i < screen->nOutputDev) {
+        compLogMessage ("edgeblend", CompLogLevelInfo,
+                    "edgeblendInitScreen called on ScreenNum %d, outputdevice %s (%d) box %d/%d %d/%d",
+                    screen->screenNum, screen->outputDev[i].name, screen->outputDev[i].id,
+                    screen->outputDev[i].region.extents.x1, screen->outputDev[i].region.extents.y1,
+                    screen->outputDev[i].region.extents.x2, screen->outputDev[i].region.extents.y2
+                   );
+        i++;
+    }
+
+    EDGEBLEND_DISPLAY (screen->display);
 
     edgeblendScreen *ebs = (edgeblendScreen *) calloc (1, sizeof (edgeblendScreen) );
 
@@ -222,12 +338,17 @@ edgeblendInitScreen (CompPlugin *p,
         return FALSE;
     }
 
-    s->base.privates[ebd->screenPrivateIndex].ptr = ebs;
-
+    CompOptionValue option;
+    option.b = TRUE;
+    setScreenOption(plugin, screen, screen->opt[COMP_SCREEN_OPTION_FORCE_INDEPENDENT].name , &option);
+    screen->base.privates[ebd->screenPrivateIndex].ptr = ebs;
+    compLogMessage ("edgeblend", CompLogLevelInfo, "force ooutputdev drawing");
     //wrap functions
-    WRAP (ebs, s, paintOutput,        edgeblendPaintOutput);
-    WRAP (ebs, s, preparePaintScreen, edgeblendPreparePaintScreen);
-    WRAP (ebs, s, donePaintScreen,    edgeblendDonePaintScreen);
+    WRAP (ebs, screen, paintScreen,        edgeblendPaintScreen);
+    WRAP (ebs, screen, paintOutput,        edgeblendPaintOutput);
+    WRAP (ebs, screen, paintTransformedOutput,        edgeblendPaintTransformedOutput);
+    WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
+    WRAP (ebs, screen, donePaintScreen,    edgeblendDonePaintScreen);
 
     return TRUE;
 }
@@ -241,7 +362,9 @@ edgeblendFiniScreen (CompPlugin *p,
     EDGEBLEND_SCREEN (s);
 
     //Restore the original functions
+    UNWRAP (ebs, s, paintScreen);
     UNWRAP (ebs, s, paintOutput);
+    UNWRAP (ebs, s, paintTransformedOutput);
     UNWRAP (ebs, s, preparePaintScreen);
     UNWRAP (ebs, s, donePaintScreen);
 
@@ -272,13 +395,16 @@ edgeblendInitDisplay (CompPlugin  *p,
     
     /* Check if its valid */
     if (ebd->screenPrivateIndex < 0)
-    {
-	/* It's invalid so free memory and return */
+    {/* It's invalid so free memory and return */
 	free (ebd);
 	return FALSE;
     }
 
-    ebd->edgeblendAtom = XInternAtom (d->display, "_COMPIZ_WM_edgeblend", 0);
+    /* BCOP - Notifies */
+    edgeblendSetConfigNotify    (d, &edgeblendNotifyCallback);
+    edgeblendSetReloadNotify    (d, &edgeblendNotifyCallback);
+    edgeblendSetAutoReloadNotify(d, &edgeblendNotifyCallback);
+    edgeblendSetShowAreasNotify (d, &edgeblendNotifyCallback);
 
     /* add reload hook */
     edgeblendSetReloadInitiate (d, edgeblendLoadConfig);
@@ -315,6 +441,13 @@ edgeblendInit (CompPlugin *p)
 
     if (displayPrivateIndex < 0)
 	return FALSE;
+    
+    myBackBuffer = (backBuffer*) malloc (sizeof(backBuffer));
+    myBackBuffer->x = 0;
+    myBackBuffer->y = 0;
+    myBackBuffer->h = 0;
+    myBackBuffer->w = 0;
+    myBackBuffer->buffer = NULL;
 
     return TRUE;
 }
@@ -328,6 +461,12 @@ edgeblendFini (CompPlugin *p)
     compLogMessage ("edgeblend", CompLogLevelInfo, "edgeblendFini called");
     if (displayPrivateIndex >= 0)
 	freeDisplayPrivateIndex (displayPrivateIndex);
+    if (myBackBuffer) {
+        if (myBackBuffer->buffer) {
+            free (myBackBuffer->buffer);
+        }
+        free(myBackBuffer);
+    }
 }
 
 
