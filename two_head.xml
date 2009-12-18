@@ -1,0 +1,18 @@
+<edgeblend>
+    <comment><!--[[1280 x 1024 and 1920 x 1200]]--></comment>
+    <config>
+        <edge>
+            <rect name="topright">
+                <x>100</x>
+                <y>100</y>
+                <height>100</height>
+                <width>100</width>
+            </rect>
+        </edge>
+        <blend>
+            <device>
+                
+            </device>
+        </blend>
+    </config>
+</edgeblend>
