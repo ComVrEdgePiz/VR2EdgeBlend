@@ -13,11 +13,11 @@
       <group>
         <_short>Main</_short>
         <option name="reload" type="key">
-          <_short>reload</_short>
+          <_short>Reload</_short>
           <_long>Force a config reload.</_long>
           <default>&lt;Control&gt;F11</default>
         </option>
-        <option name="config" type="string">
+        <option name="Config" type="string">
           <_short>Config File</_short>
           <_long>Config File.</_long>
           <hints>file;</hints>
@@ -26,12 +26,12 @@
       </group>
       <group>
         <_short>devel</_short>
-        <option name="auto reload" type="bool">
+        <option name="AutoReload" type="bool">
           <_short>reloads config for each draw</_short>
           <_long>reloads config for each draw</_long>
           <default>false</default>
         </option>
-        <option name="show areas" type="bool">
+        <option name="ShowAreas" type="bool">
           <_short>shows areas</_short>
           <_long>shows areas</_long>
           <default>false</default>
