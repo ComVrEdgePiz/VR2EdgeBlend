@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <compiz>
   <plugin name="edgeblend" useBcop="true">
+    <deps>
+        <requirement>
+            <plugin>mousepoll</plugin>
+	</requirement>
+    </deps>
     <_short>Edgeblend</_short>
     <_long>An edgeblending plugin, with gridsupport </_long>
     <category>General</category>
