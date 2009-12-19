@@ -172,7 +172,7 @@ edgeblendPaintOutput (CompScreen              *screen,
                  * configurated
                  * @TODO
                  */
-                for (i = 0; i < s->nOutputDev; i++) {
+                for (i = 0; i < screen->nOutputDev; i++) {
                     if (i == 0) {
                         glColor4f (0.5, 0.5, 0.5, 0.75);
                     } else {
@@ -436,8 +436,8 @@ edgeblendInitDisplay (CompPlugin  *plugin, CompDisplay *display)
     /* BCOP - Notify-Hooks */
     edgeblendSetConfigNotify    (display, &edgeblendNotifyCallback);
     edgeblendSetReloadNotify    (display, &edgeblendNotifyCallback);
-    edgeblendSetAutoReloadNotify(display, &edgeblendNotifyCallback);
-    edgeblendSetShowAreasNotify (display, &edgeblendNotifyCallback);
+    edgeblendSetAutoreloadNotify(display, &edgeblendNotifyCallback);
+    edgeblendSetShowareasNotify (display, &edgeblendNotifyCallback);
 
     /* WRAP */
     WRAP (ebd, display, handleEvent, edgeblendHandleEvent); //handle X Events
