@@ -18,284 +18,273 @@
  * GNU General Public License for more details.
  *
  */
+#include "edgeblend.h"
 
-#include <math.h>
-
-#include <compiz-core.h>
-#include <X11/Xatom.h>
-#include <GL/glu.h>
-#include "edgeblend_options.h"
-#include "debug.h"
-#include "blend.h"
-#include "edge.h"
 #include "parser.h"
 
-#define EDGEBLEND_BACKGROUND_DEFAULT ""
-#define EDGEBLEND_LOGO_DEFAULT ""
-
-#define GET_EDGEBLEND_DISPLAY(d)                                  \
-    ((edgeblendDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
-
-#define EDGEBLEND_DISPLAY(d)                      \
-    edgeblendDisplay *ebd = GET_EDGEBLEND_DISPLAY (d)
-
-#define GET_EDGEBLEND_SCREEN(s, ebd)                                  \
-    ((edgeblendScreen *) (s)->base.privates[(ebd)->screenPrivateIndex].ptr)
-
-#define EDGEBLEND_SCREEN(s)                                                      \
-    edgeblendScreen *ebs = GET_EDGEBLEND_SCREEN (s, GET_EDGEBLEND_DISPLAY (s->display))
-
-
-static int displayPrivateIndex = 0;
-
-typedef struct _edgeblendDisplay
-{
-    Atom edgeblendAtom;
-    int screenPrivateIndex;
-}
-edgeblendDisplay;
-
-typedef struct _edgeblendScreen
-{
-    /* WRAP-Procs */
-    PreparePaintScreenProc      preparePaintScreen;
-    DonePaintScreenProc         donePaintScreen;
-    PaintOutputProc             paintOutput;
-    PaintTransformedOutputProc  paintTransformedOutput;
-    PaintScreenProc             paintScreen;
-}
-edgeblendScreen;
-
-typedef struct _backBuffer {
-    int x;
-    int y;
-    int h;
-    int w;
-    GLubyte * buffer;
-} backBuffer;
-
-backBuffer *myBackBuffer;
+#include "fix_env.h"
 
 
 /**
- * Enables per screen operations on the context,
- * right before drawing
+ * Enables per screen operations on the context, right before drawing
  *
+ * @param CompScreen *screen - Compiz Screen
+ * @param int        ms      - msec since last draw
  */
 static void
-edgeblendPreparePaintScreen (CompScreen *s,
-			  int        ms)
+edgeblendPreparePaintScreen (CompScreen *screen, int ms)
 {
-    EDGEBLEND_SCREEN (s);
-    CompDisplay *d = s->display;
+    EDGEBLEND_SCREEN (screen);
+    CompDisplay *d = screen->display;
 
-    if (edgeblendGetAutoReload(d)) {
-        compLogMessage ("edgeblend", CompLogLevelInfo, "auto reload set");
-    }
-
-
-    UNWRAP (ebs, s, preparePaintScreen);
-    (*s->preparePaintScreen) (s, ms);
-    WRAP (ebs, s, preparePaintScreen, edgeblendPreparePaintScreen);
-
+    UNWRAP (ebs, screen, preparePaintScreen);
+        (*screen->preparePaintScreen) (screen, ms);
+    WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
 }
 
+/**
+ * Called enables influence the painting of the howl screen
+ *
+ * @param CompScreen    *screen     - Compiz Screen
+ * @param CompOutput    *outputs    - Compiz Output[]
+ * @param int           numOutputs  - #outputs
+ * @param unsigned int  mask        - draw-flags
+ */
 static void
-edgeblendGetCurrentOutputRect (CompScreen *s,
-			    XRectangle *outputRect)
+edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
+                      int numOutputs, unsigned int mask)
 {
-    int root_x = 0, root_y = 0;
-    int ignore_i;
-    unsigned int ignore_ui;
-    int output;
-    Window ignore_w;
+    EDGEBLEND_SCREEN (screen);
 
-    if (s->nOutputDev == 1)
-	output = 0;
-    else
-    {
-	XQueryPointer (s->display->display, s->root, &ignore_w, &ignore_w,
-		       &root_x, &root_y, &ignore_i, &ignore_i, &ignore_ui);
-	output = outputDeviceForPoint (s, root_x, root_y);
-    }
-
-    outputRect->x      = s->outputDev[output].region.extents.x1;
-    outputRect->y      = s->outputDev[output].region.extents.y1;
-    outputRect->width  = s->outputDev[output].region.extents.x2 -
-			 s->outputDev[output].region.extents.x1;
-    outputRect->height = s->outputDev[output].region.extents.y2 -
-			 s->outputDev[output].region.extents.y1;
-
+    UNWRAP (ebs, screen, paintScreen);
+	(*screen->paintScreen) (screen, outputs, numOutputs, mask);
+    WRAP (ebs, screen, paintScreen, edgeblendPaintScreen);
 }
 
-
-static void
-edgeblendPaintScreen (CompScreen   *s,
-	     CompOutput   *outputs,
-	     int          numOutputs,
-	     unsigned int mask)
-{
-    /*compLogMessage ("edgeblend", CompLogLevelInfo,"painting screen with mask: %d and #Outputs %d",mask,numOutputs);*/
-    EDGEBLEND_SCREEN (s);
-
-    UNWRAP (ebs, s, paintScreen);
-	(*s->paintScreen) (s, outputs, numOutputs, mask);
-    WRAP (ebs, s, paintScreen, edgeblendPaintScreen);
-}
-//
-static void
-edgeblendPaintTransformedOutput (CompScreen              *s,
-		   const ScreenPaintAttrib *sa,
-		   const CompTransform     *transform,
-		   Region                  region,
-		   CompOutput              *output,
-		   unsigned int            mask)
-{
-    EDGEBLEND_SCREEN (s);
-    //compLogMessage ("edgeblend", CompLogLevelInfo,"painting transformedoutput %s (%d) with mask %d", output->name, output->id,mask);
-    printOutputdev(output);
-    UNWRAP (ebs, s, paintTransformedOutput);
-        (*s->paintTransformedOutput) (s, sa, transform, region, output, mask);
-    WRAP (ebs, s, paintOutput, paintTransformedOutput);
+/**
+ * Draws a rect....
+ * @TODO Draw the right Cursor
+ * @SEE ezoom
+ *
+ * @param int x - x-Pos
+ * @param int y - y-Pos
+ */
+void drawMouse(int x, int y) {
+    glColor4f (1.0, 0.0, 0.0, 0.85);
+    glBegin(GL_QUADS);
+        glVertex2i(x, y);
+        glVertex2i(x+10, y);
+        glVertex2i(x, y+10);
+        glVertex2i(x+10, y+10);
+    glEnd();
 }
 
+/**
+ * Draws the actual output
+ *
+ * @param CompScreen            *screen                 - Compiz Screen
+ * @param ScreenPaintAttrib     *screenAttrib (const)   - Screen Attributs
+ * @param Region                region (const)          - Region to draw
+ * @param CompOutput            *output                 - Compiz Output
+ * @param unsigned int          mask                    - draw-flags
+ * @return Bool
+ */
 static Bool
-edgeblendPaintOutput (CompScreen              *s,
+edgeblendPaintOutput (CompScreen              *screen,
 		   const ScreenPaintAttrib *sa,
 		   const CompTransform     *transform,
 		   Region                  region,
 		   CompOutput              *output,
 		   unsigned int            mask)
 {
-    
-    EDGEBLEND_SCREEN (s);
-    CompDisplay *d = s->display;
+    EDGEBLEND_SCREEN (screen);
+
+    CompDisplay *d = screen->display;
+
     CompTransform sTransform = *transform;
 
-    //compLogMessage ("edgeblend", CompLogLevelInfo,"painting output %s (%d) with mask %d", output->name, output->id,mask);
-    //printOutputdev(output);
     Bool status = TRUE;
+
     float x,y;
-    float alpha = 0.5;
-    int i = 0;
-    GLubyte * buffer;
+    int i;
 
-    unsigned int mymask = PAINT_SCREEN_REGION_MASK | PAINT_SCREEN_TRANSFORMED_MASK | PAINT_SCREEN_FULL_MASK;
-    makeScreenCurrent (s);
-    UNWRAP (ebs, s, paintOutput);
-    status = (*s->paintOutput) (s, sa, transform, region, output, mask);
-    WRAP (ebs, s, paintOutput, edgeblendPaintOutput);
+    /* ensure right textures */
+    makeScreenCurrent (screen);
 
-    if (output->id != ~0) {
-    //compLogMessage ("edgeblend", CompLogLevelInfo,"painting screen %d on output %s (%d)", s->screenNum,output->name, output->id);
-    //compLogMessage ("edgeblend", CompLogLevelInfo,"\t %d/%d %d/%d rect ", region->extents.x1, region->extents.y1, region->extents.x2, region->extents.y2);
-    printOutputdev(output);
-    
-    
-        transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &sTransform);
-        glLoadMatrixf (sTransform.m);
+    /* lets draw everybody to the framebuffer */
+    UNWRAP (ebs, screen, paintOutput);
+        status = (*screen->paintOutput) (screen, sa, transform, region, output, mask);
+    WRAP (ebs, screen, paintOutput, edgeblendPaintOutput);
+    /* and here we go ;) */
 
-        if (myBackBuffer->buffer) {
-            compLogMessage ("edgeblend", CompLogLevelInfo,"try writing buffers back");
-            glRasterPos2i(myBackBuffer->x + 10, myBackBuffer->y+ 10);
-            glDrawPixels(myBackBuffer->w-10, myBackBuffer->h -10, GL_RGBA, GL_UNSIGNED_BYTE, myBackBuffer->buffer);
-            free (myBackBuffer->buffer);
-            myBackBuffer->buffer = NULL;
-            compLogMessage ("edgeblend", CompLogLevelInfo,"writing buffers back");
-        }
+    /* transform to right viewport */
+    transformToScreenSpace (screen, output, -DEFAULT_Z_CAMERA, &sTransform);
+    glLoadMatrixf (sTransform.m);
 
-            compLogMessage ("edgeblend", CompLogLevelInfo,"try read buffers");
-            buffer = (GLubyte *)malloc (sizeof (GLubyte) * output->width * output->height * 4);
-            glReadPixels (output->region.extents.x1, output->region.extents.y1, output->width, output->height,
-                  GL_RGBA, GL_UNSIGNED_BYTE,
-                  (GLvoid *) buffer);
-            myBackBuffer->x = output->region.extents.x1;
-            myBackBuffer->y = output->region.extents.y1;
-            myBackBuffer->w = output->width;
-            myBackBuffer->h = output->height;
-            myBackBuffer->buffer = buffer;
-            compLogMessage ("edgeblend", CompLogLevelInfo,"read buffers");
+    /* Save current RasterPosition */
+    glPushAttrib(GL_CURRENT_BIT);
+
+    /* 1. Move towards the lower right output of out output-grid and draw then
+     * move from bottom to to and from right to left
+     * @TODO - do like above
+     */
+        //move to 2. output (assuming leftof, 2 * 1280x1024)
+        //copy overlapping area to the outputdevice
+        glRasterPos2i(1280, screen->height);
+        glCopyPixels(1080, 0, 1280, screen->height, GL_COLOR);
+
+
+        /* Save every thing*/
         glPushMatrix ();
-        glPushAttrib(GL_COLOR_BUFFER_BIT);
-            glEnable (GL_BLEND);
-            glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            if (output->id == 0) {
-                glColor4f (0.5, 0.5, 0.5, 0.75);
-            } else {
-                glColor4f (0.0, 0.5, 0.5, 0.75);
-            }
+            glPushAttrib(GL_COLOR_BUFFER_BIT);
+                //we want blend everything at the moment since its cool...
+                glEnable (GL_BLEND);
+                glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-           
-                   x = output->region.extents.x1;
-                   y = output->region.extents.y1;
+                /* 2. We have to draw our replacment Cursor, since the cursor X
+                 * provided is out-of-sync when copy buffer arround.
+                 */
+                //fetch current position of the cursor from mousepoll-plugin
+                if (fix_CursorPoll(screen, ebs)) {
+                    x = ebs->mouseX;
+                    y = ebs->mouseY;
+               /* @TODO  needed clipping when at the edge of outputdevices*/
+                    // != left upper output then draw cursor:
+                    if (x > 1080) {
+                        /* if in overlapping area draw two cursors */
+                        if (x < 1280) {
+                            drawMouse(x,y);
+                            drawMouse(x + 200,y);
+                        }
+                        /* else draw cursor here he belongs */
+                        else {
+                            drawMouse(x + 200,y);
+                        }
+                    }
+                    /* draw cursor on the current position */
+                    else {
+                        drawMouse(x,y);
+                    }
+                }
+                
+                /*
+                 * 3. Loop over all outputdevices and assign blending, as
+                 * configurated
+                 * @TODO
+                 */
+                for (i = 0; i < s->nOutputDev; i++) {
+                    if (i == 0) {
+                        glColor4f (0.5, 0.5, 0.5, 0.75);
+                    } else {
+                        glColor4f (0.0, 0.5, 0.5, 0.75);
+                    }
+                       x = screen->outputDev[i].region.extents.x1;
+                       y = screen->outputDev[i].region.extents.y1;
 
-                   //compLogMessage ("edgeblend", CompLogLevelInfo,"painting screen %d output: %d -> x: %f y: %f",s->screenNum,s->outputDev[i].id,x,y);
-
-                    glBegin(GL_QUADS);
-                        glVertex2f(x,       y);
-                        glVertex2f(x+100.0, y);
-                        glVertex2f(x,       y+100.0);
-                        glVertex2f(x+100.0, y+100.0);
-                    glEnd();
-
-
-            glDisable(GL_BLEND);
-        glPopAttrib();
-        glColor4usv (defaultColor);
-    glPopMatrix ();
-    }
+                        glBegin(GL_QUADS);
+                            glVertex2f(x, y);
+                            glVertex2f(x+100.0, y);
+                            glVertex2f(x, y+100.0);
+                            glVertex2f(x+100.0, y+100.0);
+                        glEnd();
+                }
+                /* restore opengl state */
+                
+                glDisable(GL_BLEND);
+            glPopAttrib();
+        glPopMatrix ();
+    glPopAttrib();
+    
     return status;
 }
 
-
 /**
  * Run after drawing the screen, enabled forcing redraws by damaging the screen
+ * 
+ * @param CompScreen    *screen - Compiz Screen
  */
 static void
-edgeblendDonePaintScreen (CompScreen * s)
+edgeblendDonePaintScreen (CompScreen * screen)
 {
-    EDGEBLEND_SCREEN (s);
+    EDGEBLEND_SCREEN (screen);
 
-    if(1) damageScreen (s);
+    //let's damage the screen since we have to redraw the howl screen....
+    damageScreen (screen);
 
-    UNWRAP (ebs, s, donePaintScreen);
-    (*s->donePaintScreen) (s);
-    WRAP (ebs, s, donePaintScreen, edgeblendDonePaintScreen);
+    UNWRAP (ebs, screen, donePaintScreen);
+        (*screen->donePaintScreen) (screen);
+    WRAP (ebs, screen, donePaintScreen, edgeblendDonePaintScreen);
 }
 
+/**
+ * React on XEvents
+ *
+ * @param CompDisplay   *display    - Compiz Display
+ * @param XEvent        *event      - Xserver Event
+ */
+void
+edgeblendHandleEvent (CompDisplay * display, XEvent * event)
+{  
+    EDGEBLEND_DISPLAY(display);
+    
+    UNWRAP (ebd, display, handleEvent);
+        (*display->handleEvent) (display, event);
+    WRAP (ebd, display, handleEvent, edgeblendHandleEvent);
+}
 
-
-
+/******************************************************************************/
+/* Manage Functions                                                           */
+/******************************************************************************/
+/**
+ * Called wenn the "Reload"-shortcut is pressed
+ *
+ * @param CompDisplay       *display    - 
+ * @param CompAction        *action     -
+ * @param CompActionState   state       -
+ * @param CompOption        *option     -
+ * @param int               nOption     -
+ * @return Bool
+ */
 static Bool
-edgeblendLoadConfig (CompDisplay     *d,
-                     CompAction      *ac,
-                     CompActionState state,
-                     CompOption      *option,
-                     int             nOption)
+edgeblendLoadConfig (CompDisplay     *display,
+                     CompAction      *action ,
+                     CompActionState  state  ,
+                     CompOption      *option ,
+                     int              nOption)
 {
     compLogMessage ("edgeblend", CompLogLevelInfo, "edgeblendLoadConfig called");
-    CompScreen *s;
+    CompScreen *screen;
 
-    s = findScreenAtDisplay (d, getIntOptionNamed (option, nOption, "root", 0));
+    screen = findScreenAtDisplay (display, getIntOptionNamed (option, nOption, "root", 0));
 
-    if (s)
+    if (screen)
     {
-	EDGEBLEND_SCREEN (s);
-	damageScreen (s);
+	EDGEBLEND_SCREEN (screen);
+	damageScreen (screen);
     }
 
     return FALSE;
 }
 
-/** OPTIONS **/
-void edgeblendNotifyCallback(CompDisplay *display, CompOption *opt, EdgeblendDisplayOptions num)
+/**
+ * Called when an option in the CCSM is changed
+ *
+ * @param CompDisplay               *display    - Compiz Display
+ * @param CompOption                *option     - Compiz Option
+ * @param EdgeblendDisplayOptions    num        - Option number see xml/bcop
+ *
+ */
+void edgeblendNotifyCallback(CompDisplay *display, CompOption *option, EdgeblendDisplayOptions num)
 {
+    /* Which Option was cahnged? */
     switch (num) {
         case EdgeblendDisplayOptionConfig:
+            //reload config
             compLogMessage ("edgeblend", CompLogLevelInfo,"edgeblendNotifyCallback called on option config");
-            compLogMessage ("edgeblend", CompLogLevelInfo," %d",load_config(opt->value.s));
+            compLogMessage ("edgeblend", CompLogLevelInfo," %d",load_config(option->value.s));
             break;
         default:
+            //else say something
             compLogMessage ("edgeblend", CompLogLevelInfo,"edgeblendNotifyCallback called on option %d", num);
             break;
     }
@@ -303,95 +292,139 @@ void edgeblendNotifyCallback(CompDisplay *display, CompOption *opt, EdgeblendDis
 
 
 /******************************************************************************/
-/*                                                                            */
-/*              Init/Fini - Functions                                         */
-/*                                                                            */
+/* Init/Fini - Functions                                                      */
 /******************************************************************************/
+/**
+ * Initialize a screen, since edgeblending is only supported on Bigscreen
+ * enviroments, like Nvidia's TwinView, we only have one screen per display.
+ *
+ * @param CompPlugin    *plugin - Compiz Plugin
+ * @param CompScreen    *screen - Compiz Screen
+ * @return Bool
+ */
 static Bool
-edgeblendInitScreen (CompPlugin *plugin,
-		     CompScreen *screen)
+edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
 {
-    compLogMessage ("edgeblend", CompLogLevelInfo, 
-                    "edgeblendInitScreen called on ScreenNum %d (x: %d y: %d, height: %d, width: %d)",
-                    screen->screenNum, screen->x, screen->y, screen->height, screen->width
-                   );
-    compLogMessage ("edgeblend", CompLogLevelInfo,
-                    "edgeblendInitScreen called on ScreenNum %d, is has %d outputdevices (current %d)",
-                    screen->screenNum, screen->nOutputDev, screen->currentOutputDev
-                   );
-    int i = 0;
-    while (i < screen->nOutputDev) {
-        compLogMessage ("edgeblend", CompLogLevelInfo,
-                    "edgeblendInitScreen called on ScreenNum %d, outputdevice %s (%d) box %d/%d %d/%d",
-                    screen->screenNum, screen->outputDev[i].name, screen->outputDev[i].id,
-                    screen->outputDev[i].region.extents.x1, screen->outputDev[i].region.extents.y1,
-                    screen->outputDev[i].region.extents.x2, screen->outputDev[i].region.extents.y2
-                   );
-        i++;
-    }
+    //for version checking
+    int major, minor;
+    //for mousepolling plugin index
+    int index;
 
     EDGEBLEND_DISPLAY (screen->display);
-
+    //create screen private data
     edgeblendScreen *ebs = (edgeblendScreen *) calloc (1, sizeof (edgeblendScreen) );
-
     if (!ebs) {
         return FALSE;
     }
 
-    CompOptionValue option;
-    option.b = TRUE;
-    setScreenOption(plugin, screen, screen->opt[COMP_SCREEN_OPTION_FORCE_INDEPENDENT].name , &option);
-    screen->base.privates[ebd->screenPrivateIndex].ptr = ebs;
-    compLogMessage ("edgeblend", CompLogLevelInfo, "force ooutputdev drawing");
-    //wrap functions
-    WRAP (ebs, screen, paintScreen,        edgeblendPaintScreen);
-    WRAP (ebs, screen, paintOutput,        edgeblendPaintOutput);
-    WRAP (ebs, screen, paintTransformedOutput,        edgeblendPaintTransformedOutput);
-    WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
-    WRAP (ebs, screen, donePaintScreen,    edgeblendDonePaintScreen);
+    /* @TODO ensure we have only one screen for the display else return FALSE;*/
 
+    /* ensure we can disable the XCursor */
+    ebs->fixesSupported = XFixesQueryExtension(screen->display->display, &ebs->fixesEventBase, &ebs->fixesErrorBase);
+    if (!ebs->fixesSupported)
+        return FALSE;
+
+    /* ensure we can disable the XCursor */
+    XFixesQueryVersion(screen->display->display, &major, &minor);
+    ebs->canHideCursor = (major >= 4) ? TRUE : FALSE;
+    if (!ebs->canHideCursor)
+        return FALSE;
+    
+    ebs->cursorHidden = FALSE;
+    
+    if (!checkPluginABI ("mousepoll", MOUSEPOLL_ABIVERSION))
+	return FALSE;
+    
+    if (!getPluginDisplayIndex (screen->display, "mousepoll", &index))
+	return FALSE;
+
+    /* grep mousepolling plugin function */
+    ebs->mpFunc = screen->display->base.privates[index].ptr;
+    
+    //switch ENV
+    /* resize XDesktop */
+    fix_XDesktopSize(screen, 2160, screen->height);
+    /* disable XCursor and enable mousepolling */
+    fix_XCursor(screen, ebs, TRUE);
+    /* ensure fullscreenoutput is used to render */
+    fix_CompFullscreenOutput(plugin, screen, ebs, TRUE);
+
+    /* store private data */
+    screen->base.privates[ebd->screenPrivateIndex].ptr = ebs;
+    
+    //wrap functions
+    //WRAP (ebs, screen, paintScreen,    edgeblendPaintScreen);
+    WRAP (ebs, screen, paintOutput,     edgeblendPaintOutput);      //we must hook into drawing...
+    WRAP (ebs, screen, donePaintScreen, edgeblendDonePaintScreen);  //we must damage the screen every time
+    //WRAP (ebs, screen, paintWindow,    edgeblendPaintWindow);
+    //WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
+
+    //damage screen to init edgeblend
+    damageScreen (screen);
     return TRUE;
 }
 
-
+/**
+ * Finalizes a screen.
+ *
+ * @param CompPlugin    *plugin - Compiz Plugin
+ * @param CompScreen    *screen - Compiz Screen
+ */
 static void
-edgeblendFiniScreen (CompPlugin *p,
-		  CompScreen *s)
+edgeblendFiniScreen (CompPlugin *plugin, CompScreen *screen)
 {
     compLogMessage ("edgeblend", CompLogLevelInfo, "edgeblendFiniScreen called");
-    EDGEBLEND_SCREEN (s);
+    EDGEBLEND_SCREEN (screen);
 
     //Restore the original functions
-    UNWRAP (ebs, s, paintScreen);
-    UNWRAP (ebs, s, paintOutput);
-    UNWRAP (ebs, s, paintTransformedOutput);
-    UNWRAP (ebs, s, preparePaintScreen);
-    UNWRAP (ebs, s, donePaintScreen);
+    //UNWRAP (ebs, s, paintScreen);    
+    UNWRAP (ebs, screen, paintOutput);
+    UNWRAP (ebs, screen, donePaintScreen);
+    //UNWRAP (ebs, s, paintWindow);
+    //UNWRAP (ebs, s, paintTransformedOutput);
+    //UNWRAP (ebs, s, preparePaintScreen);
 
+
+    /* restore height and width of the X-Desktop */
+    fix_XDesktopSize(screen, 2560, screen->height);
+    /* restore XCursor handling and remove mosue polling */
+    fix_XCursor(screen, ebs, FALSE);
+    /* restore compiz fullscreen/outputdevice-based rendering */
+    fix_CompFullscreenOutput(plugin, screen, ebs, FALSE);
+    
+
+    //clear edgeblend
+    damageScreen (screen);
     //Free the pointer
     free (ebs);
 }
 
-
+/**
+ * Initialize a Display
+ *
+ * @param CompPlugin    *plugin     - Compiz Plugin
+ * @param CompDisplay   *display    - Compiz Display
+ * @return Bool
+ */
 static Bool
-edgeblendInitDisplay (CompPlugin  *p,
-                      CompDisplay *d)
+edgeblendInitDisplay (CompPlugin  *plugin, CompDisplay *display)
 {
     compLogMessage ("edgeblend", CompLogLevelInfo, "edgeblendInitDisplay called on %s",
-                    d->displayString);
+                    display->displayString);
+
     edgeblendDisplay *ebd;
 
+    //check Application Binary Interface Version
     if (!checkPluginABI ("core", CORE_ABIVERSION))
 	return FALSE;
 
     /* Generate a edgeblend display struct */
     ebd = (edgeblendDisplay *) malloc (sizeof (edgeblendDisplay) );
-
     if (!ebd)
 	return FALSE;
 
     /* Allocate a private index */
-    ebd->screenPrivateIndex = allocateScreenPrivateIndex (d);
+    ebd->screenPrivateIndex = allocateScreenPrivateIndex (display);
     
     /* Check if its valid */
     if (ebd->screenPrivateIndex < 0)
@@ -400,80 +433,99 @@ edgeblendInitDisplay (CompPlugin  *p,
 	return FALSE;
     }
 
-    /* BCOP - Notifies */
-    edgeblendSetConfigNotify    (d, &edgeblendNotifyCallback);
-    edgeblendSetReloadNotify    (d, &edgeblendNotifyCallback);
-    edgeblendSetAutoReloadNotify(d, &edgeblendNotifyCallback);
-    edgeblendSetShowAreasNotify (d, &edgeblendNotifyCallback);
+    /* BCOP - Notify-Hooks */
+    edgeblendSetConfigNotify    (display, &edgeblendNotifyCallback);
+    edgeblendSetReloadNotify    (display, &edgeblendNotifyCallback);
+    edgeblendSetAutoReloadNotify(display, &edgeblendNotifyCallback);
+    edgeblendSetShowAreasNotify (display, &edgeblendNotifyCallback);
 
-    /* add reload hook */
-    edgeblendSetReloadInitiate (d, edgeblendLoadConfig);
+    /* WRAP */
+    WRAP (ebd, display, handleEvent, edgeblendHandleEvent); //handle X Events
 
-    d->base.privates[displayPrivateIndex].ptr = ebd;
+    /* add reload hook 
+     * @TODO -  build real handler for this, since it must do more then load the config,
+     *          like resize XDesktop, update cursor...
+     */
+    edgeblendSetReloadInitiate (display, edgeblendLoadConfig);
+
+    display->base.privates[displayPrivateIndex].ptr = ebd;
     return TRUE;
 }
 
+/**
+ * Finalizes a Display  -> cleaning
+ *
+ * @param CompPlugin    *plugin     - Compiz Plugin
+ * @param CompDisplay   *display    - Compiz Display
+ */
 static void
-edgeblendFiniDisplay (CompPlugin  *p,
-		   CompDisplay *d)
+edgeblendFiniDisplay (CompPlugin  *plugin, CompDisplay *display)
 {
     compLogMessage ("edgeblend", CompLogLevelInfo, "edgeblendFiniDisplay called");
-    EDGEBLEND_DISPLAY (d);
+    EDGEBLEND_DISPLAY (display);
 
     /** remove hook */
-    edgeblendSetReloadTerminate (d, edgeblendLoadConfig);
+    edgeblendSetReloadTerminate (display, edgeblendLoadConfig);
 
+    /* UNWRAP */
+    UNWRAP (ebd, display, handleEvent);
+    
     /* Free the private index */
-    freeScreenPrivateIndex (d, ebd->screenPrivateIndex);
+    freeScreenPrivateIndex (display, ebd->screenPrivateIndex);
 
     /* Free the pointer */
     free (ebd);
 }
 
 /**
- * generates an private index for the current display
+ * Initializes the plugin
+ * Generates an private index for the current display
+ *
+ * @param CompPlugin *plugin - Compiz Plugin
+ * @return Bool
  */
 static Bool
-edgeblendInit (CompPlugin *p)
+edgeblendInit (CompPlugin *plugin)
 {
     compLogMessage ("edgeblend", CompLogLevelInfo, "edgeblendInit called");
+
+    //get index on display
     displayPrivateIndex = allocateDisplayPrivateIndex ();
 
+    //no inex no plugin
     if (displayPrivateIndex < 0)
 	return FALSE;
     
-    myBackBuffer = (backBuffer*) malloc (sizeof(backBuffer));
-    myBackBuffer->x = 0;
-    myBackBuffer->y = 0;
-    myBackBuffer->h = 0;
-    myBackBuffer->w = 0;
-    myBackBuffer->buffer = NULL;
-
     return TRUE;
 }
 
 /**
- * frees private index on display
+ * Finalizes the plugin -> cleaning
+ *
+ * @param CompPlugin *plugin - Compiz Plugin
  */
 static void
 edgeblendFini (CompPlugin *p)
 {
     compLogMessage ("edgeblend", CompLogLevelInfo, "edgeblendFini called");
+
+    //cleanup display index, if any
     if (displayPrivateIndex >= 0)
 	freeDisplayPrivateIndex (displayPrivateIndex);
-    if (myBackBuffer) {
-        if (myBackBuffer->buffer) {
-            free (myBackBuffer->buffer);
-        }
-        free(myBackBuffer);
-    }
 }
 
-
-/** COMPIZ-Plugin-Structure **/
+/******************************************************************************/
+/* COMPIZ-Plugin-Structure                                                    */
+/******************************************************************************/
+/**
+ * Provides an array with the init-functions
+ *
+ * @param CompPlugin    *plugin - Compiz Plugin
+ * @param CompObject    *object - Compiz Object
+ * @return CompizBool
+ */
 static CompBool
-edgeblendInitObject (CompPlugin *p,
-		  CompObject *o)
+edgeblendInitObject (CompPlugin *plugin, CompObject *object)
 {
     static InitPluginObjectProc dispTab[] = {
 	(InitPluginObjectProc) 0, /* InitCore */
@@ -481,12 +533,17 @@ edgeblendInitObject (CompPlugin *p,
 	(InitPluginObjectProc) edgeblendInitScreen
     };
 
-    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), TRUE, (plugin, object));
 }
 
+/**
+ * Provides an array with the fini-functions
+ *
+ * @param CompPlugin    *plugin - Compiz Plugin
+ * @param CompObject    *object - Compiz Object
+ */
 static void
-edgeblendFiniObject (CompPlugin *p,
-		  CompObject *o)
+edgeblendFiniObject (CompPlugin *plugin, CompObject *object)
 {
     static FiniPluginObjectProc dispTab[] = {
 	(FiniPluginObjectProc) 0, /* FiniCore */
@@ -494,9 +551,12 @@ edgeblendFiniObject (CompPlugin *p,
 	(FiniPluginObjectProc) edgeblendFiniScreen
     };
 
-    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
+    DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), (plugin, object));
 }
 
+/**
+ * @var CompPluginVTable    edgeblendVTable - InitStruct
+ */
 CompPluginVTable edgeblendVTable = {
     "edgeblend",
     0,
@@ -508,6 +568,11 @@ CompPluginVTable edgeblendVTable = {
     0
 };
 
+/**
+ * Compiz Plugin load function
+ *
+ * @return CompPluginVTable*
+ */
 CompPluginVTable *
 getCompPluginInfo (void)
 {

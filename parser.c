@@ -2,11 +2,12 @@
 /**
  * Loads the XML-config-file
  *
+ * @PARAM char *file - Path to the config-file
  */
 int
-load_config(char* file)
+load_config(char *file)
 {
-    xmlDoc *doc = NULL;
+    xmlDoc  *doc          = NULL;
     xmlNode *root_element = NULL;
     /*parse the file and get the DOM */
 

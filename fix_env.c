@@ -1,5 +1,16 @@
 #include "fix_env.h"
 
+/**
+ * Sets the size of the Desktop of the XDisplay, to get right borders for
+ * the mouse
+ * @TODO make it work... perhaps since its something about windowhandling it
+ *       could be done inside compiz?
+ * @TODO store and restore values
+ *
+ * CompScreen       *screen - Compiz Screen
+ * unsigned long    width   - new XDesktop width
+ * unsigned long    height  - new XDesktop height
+ */
 void
 fix_XDesktopSize (CompScreen * screen, unsigned long width, unsigned long height)
 {
@@ -19,8 +30,16 @@ fix_XDesktopSize (CompScreen * screen, unsigned long width, unsigned long height
     compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," Geo = %d, Work = %d",geo, work);
 }
 
+/**
+ * Forces Compiz to use fullscreenOutput to render
+ *
+ * @PARAM CompPlugin        *plugin - Compiz Plugin
+ * @PARAM CompScreen        *screen - Compiz Screen
+ * @PARAM edgeblendScreen   *ebs    - private edgeblend plugin screen data
+ * @PARAM BOOL              mode    - on/off
+ */
 void
-fix_CompFullscreenOutput(CompPlugin * plugin, CompScreen * screen, edgeblendScreen * ebs, Bool mode)
+fix_CompFullscreenOutput(CompPlugin *plugin, CompScreen * screen, edgeblendScreen * ebs, Bool mode)
 {
     if (mode == TRUE) {
         /* switch force independet output */
@@ -47,17 +66,14 @@ fix_CompFullscreenOutput(CompPlugin * plugin, CompScreen * screen, edgeblendScre
 
 }
 
-
-
-static void updateMouseInterval (CompScreen *screen, int x, int y)
-{
-    /*EDGEBLEND_SCREEN(screen);
-    ebs->mouseX     = x;
-    ebs->mouseY     = y;
-    ebs->lastChange = time(NULL);*/
-    //@todo redraw
-}
-
+/**
+ * Disables the XCursor, so we can draw our own
+ * Todo so we hook into the mousepull-plugin
+ *
+ * @PARAM CompScreen        *screen - Compiz Screen
+ * @PARAM edgeblendScreen   *ebs    - private edgeblend plugin screen data
+ * @PARAM Bool              mode    - on/off
+ */
 void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode)
 {
     compLogMessage ("edgeblend::fix_env->hidecursor", CompLogLevelInfo," true????? %d", displayPrivateIndex);
@@ -66,20 +82,16 @@ void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode)
     if (!ebs->fixesSupported) return;
 
     if (mode == TRUE) {
-        /*if (!zs->opt[SOPT_SCALE_MOUSE].value.b)
-            return;
+        /*if (!zs->opt[SOPT_SCALE_MOUSE].value.b) return;
         if (!zs->cursorInfoSelected){
             zs->cursorInfoSelected = TRUE;
             XFixesSelectCursorInput (s->display->display, s->root, XFixesDisplayCursorNotifyMask);
             zoomUpdateCursor (s, &zs->cursor);
-        }
-        zs->opt[SOPT_HIDE_ORIGINAL_MOUSE].value.b) ??
-        {*/
+        } zs->opt[SOPT_HIDE_ORIGINAL_MOUSE].value.b) ??*/
         
-
+        /* can we? */
         if (ebs->canHideCursor && !ebs->cursorHidden) {
-            //poll position
-            //updateinterval-FUNC lives in edgeblend.c
+            //poll position handle not nedded since we poll on every draw...
             //ebs->pollHandle = (*ebs->mpFunc->addPositionPolling) (screen, updateMouseInterval);
             ebs->lastChange = time(NULL);
             (*ebs->mpFunc->getCurrentPosition) (screen, &ebs->mouseX, &ebs->mouseY);
@@ -93,15 +105,14 @@ void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode)
             zs->cursorInfoSelected = FALSE;
             XFixesSelectCursorInput (s->display->display, s->root, 0);
         }
-        if (zs->cursor.isSet) {
-            freeCursor (&zs->cursor);
-        }*/
+        if (zs->cursor.isSet) {freeCursor (&zs->cursor);}*/
+        /* can we? (since it's hidden we can ;) */
         if (ebs->cursorHidden) {
-            //stop Poll
-            (*ebs->mpFunc->removePositionPolling) (screen, ebs->pollHandle);
+            //stop polling not needed since we do not use the handle
+            //(*ebs->mpFunc->removePositionPolling) (screen, ebs->pollHandle);
             ebs->pollHandle = NULL;
             ebs->mpFunc     = NULL;
-            //show
+            //show XCursor
             ebs->cursorHidden = FALSE;
             XFixesShowCursor (screen->display->display, screen->root);
             compLogMessage ("edgeblend::fix_env->hidecursor", CompLogLevelInfo," false");
@@ -109,8 +120,16 @@ void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode)
     }
 }
 
+/**
+ * Polls the position of the cursor and saves them inside the ebs (mouseX/Y)
+ *
+ * @PARAM CompScreen        *screen - Compiz Screen
+ * @PARAM edgeblendScreen   *ebs    - private edgeblend plugin screen data
+ * @RETURN Bool
+ */
 Bool fix_CursorPoll(CompScreen * screen, edgeblendScreen * ebs)
 {
+    //since we have no handle don't check it, it's always NULL...
     if (/*ebs->pollHandle && */ ebs->mpFunc) {
         ebs->lastChange = time(NULL);
 	(*ebs->mpFunc->getCurrentPosition) (screen, &ebs->mouseX, &ebs->mouseY);

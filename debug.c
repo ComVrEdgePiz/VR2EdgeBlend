@@ -1,7 +1,12 @@
 #include "debug.h"
 
+/**
+ * Prints some data about the Output to the log
+ *
+ * @PARAM CompOutput    *output - Compiz Output
+ */
 void
-printOutputdev(CompOutput * output)
+printOutputdev(CompOutput *output)
 {
     compLogMessage ("edgeblend", CompLogLevelInfo,"outputDev %s (%d %dx%d): %d/%d -> %d/%d",
             output->name, output->id, output->width, output->height,
