@@ -26,7 +26,7 @@
 
 
 /**
- * Enables per screen operations on the context, right before drawing
+ * Enables per screen operations on the context, right before drawing,
  *
  * @param CompScreen *screen - Compiz Screen
  * @param int        ms      - msec since last draw
@@ -35,7 +35,7 @@ static void
 edgeblendPreparePaintScreen (CompScreen *screen, int ms)
 {
     EDGEBLEND_SCREEN (screen);
-    CompDisplay *d = screen->display;
+    CompDisplay *d = screen->display; 
 
     UNWRAP (ebs, screen, preparePaintScreen);
         (*screen->preparePaintScreen) (screen, ms);
@@ -61,10 +61,14 @@ edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
     WRAP (ebs, screen, paintScreen, edgeblendPaintScreen);
 }
 
+
+
 /**
  * Draws a rect....
  * @TODO Draw the right Cursor
  * @SEE ezoom
+ *
+ * @TODO better done with ./src/paint.c:415:	(*screen->paintCursor) (c, transform, tmpRegion, 0);
  *
  * @param int x - x-Pos
  * @param int y - y-Pos
@@ -98,7 +102,7 @@ edgeblendPaintOutput (CompScreen              *screen,
 		   unsigned int            mask)
 {
     EDGEBLEND_SCREEN (screen);
-
+    
     CompDisplay *d = screen->display;
 
     CompTransform sTransform = *transform;
@@ -217,7 +221,7 @@ edgeblendDonePaintScreen (CompScreen * screen)
 }
 
 /**
- * React on XEvents
+ * React on XEvents, used to keep the pointer inside the workarea
  *
  * @param CompDisplay   *display    - Compiz Display
  * @param XEvent        *event      - Xserver Event
@@ -226,6 +230,15 @@ void
 edgeblendHandleEvent (CompDisplay * display, XEvent * event)
 {  
     EDGEBLEND_DISPLAY(display);
+    CompScreen *screen = display->screens;
+
+    //since we support only one screen we can assume the firstone in the
+    //correct one
+    //for (screen = display->screens; screen; screen = screen->next) {
+        //see display.c:2701 void warpPointer (CompScreen *s, int dx,int dy);
+        if (pointerX > screen->width || pointerY > screen->height)
+            warpPointer(screen, 0,0);
+    //}
     
     UNWRAP (ebd, display, handleEvent);
         (*display->handleEvent) (display, event);
@@ -340,24 +353,32 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
 
     /* grep mousepolling plugin function */
     ebs->mpFunc = screen->display->base.privates[index].ptr;
-    
+
+    ebs->orginalWorkarea.outputExtends = NULL;
+
     //switch ENV
+    /* fix workarea */
+    if (!fix_CompScreenWorkarea(screen, ebs,TRUE)) {
+        return FALSE;
+    }
     /* resize XDesktop */
-    fix_XDesktopSize(screen, 2160, screen->height);
+    //fix_XDesktopSize(screen, 2160, screen->height);
     /* disable XCursor and enable mousepolling */
     fix_XCursor(screen, ebs, TRUE);
     /* ensure fullscreenoutput is used to render */
     fix_CompFullscreenOutput(plugin, screen, ebs, TRUE);
+    
+
 
     /* store private data */
     screen->base.privates[ebd->screenPrivateIndex].ptr = ebs;
     
     //wrap functions
     //WRAP (ebs, screen, paintScreen,    edgeblendPaintScreen);
+    //WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
     WRAP (ebs, screen, paintOutput,     edgeblendPaintOutput);      //we must hook into drawing...
     WRAP (ebs, screen, donePaintScreen, edgeblendDonePaintScreen);  //we must damage the screen every time
     //WRAP (ebs, screen, paintWindow,    edgeblendPaintWindow);
-    //WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
 
     //damage screen to init edgeblend
     damageScreen (screen);
@@ -377,16 +398,19 @@ edgeblendFiniScreen (CompPlugin *plugin, CompScreen *screen)
     EDGEBLEND_SCREEN (screen);
 
     //Restore the original functions
-    //UNWRAP (ebs, s, paintScreen);    
+    //UNWRAP (ebs, s, paintScreen);
+    //UNWRAP (ebs, screen, preparePaintScreen);
     UNWRAP (ebs, screen, paintOutput);
     UNWRAP (ebs, screen, donePaintScreen);
     //UNWRAP (ebs, s, paintWindow);
     //UNWRAP (ebs, s, paintTransformedOutput);
-    //UNWRAP (ebs, s, preparePaintScreen);
+    
 
 
+    /* restore woarkarea */
+    fix_CompScreenWorkarea(screen, ebs, FALSE);
     /* restore height and width of the X-Desktop */
-    fix_XDesktopSize(screen, 2560, screen->height);
+  //  fix_XDesktopSize(screen, 2560, screen->height);
     /* restore XCursor handling and remove mosue polling */
     fix_XCursor(screen, ebs, FALSE);
     /* restore compiz fullscreen/outputdevice-based rendering */

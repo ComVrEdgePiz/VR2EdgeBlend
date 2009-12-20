@@ -25,6 +25,13 @@ typedef struct _edgeblendDisplay
     int                 screenPrivateIndex;
 } edgeblendDisplay;
 
+typedef struct _edgeblendWorkareaFix {
+    unsigned int    nOutputs;
+    BOX **          outputExtends; // pointer to box pointers...
+    int             orginalWidth;
+    int             orginalHeight;
+} EdgeblendWorkareaFix;
+
 typedef struct _edgeblendScreen
 {
     /* WRAP-Procs */
@@ -34,6 +41,9 @@ typedef struct _edgeblendScreen
     PaintTransformedOutputProc  paintTransformedOutput;
     PaintScreenProc             paintScreen;
     PaintWindowProc             paintWindow;
+
+    /* workarea */
+    EdgeblendWorkareaFix        orginalWorkarea;
 
     /* fullscreenoutput */
     Bool    hadOverlappingOutputs;
@@ -47,8 +57,6 @@ typedef struct _edgeblendScreen
     time_t                  lastChange;
     int                     mouseX;
     int                     mouseY;
-
-
 
     /* fixes */
     Bool    fixesSupported;
