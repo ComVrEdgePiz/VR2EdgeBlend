@@ -213,6 +213,8 @@ edgeblendDonePaintScreen (CompScreen * screen)
     EDGEBLEND_SCREEN (screen);
 
     //let's damage the screen since we have to redraw the howl screen....
+    //burns cpu-time like a champ... need to switch to drawing only what changed
+    //or better write an XExtension... perhaps could be used as bachelor-thesis?
     damageScreen (screen);
 
     UNWRAP (ebs, screen, donePaintScreen);
