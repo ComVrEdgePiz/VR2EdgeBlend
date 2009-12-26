@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "fix_env.h"
+#include "stdlib.h"
 
 /**
  * Sets the size of the Desktop of the XDisplay, to get right borders for
@@ -22,7 +23,7 @@ fix_XDesktopSize (CompScreen * screen, unsigned long width, unsigned long height
     data[1] = (unsigned long) height;
 
     geo = XChangeProperty(screen->display->display, screen->root, screen->display->desktopGeometryAtom, XA_CARDINAL, 32, PropModeReplace, (unsigned char *) data, 2);
-    compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," Geo to %d/%d = %d",width, height, geo);
+    //compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," Geo to %d/%d = %d",width, height, geo);
 
     unsigned long data2[4];
     data2[0] = (unsigned long) 0;
@@ -30,7 +31,7 @@ fix_XDesktopSize (CompScreen * screen, unsigned long width, unsigned long height
     data2[2] = (unsigned long) width;
     data2[3] = (unsigned long) height;
     work = XChangeProperty(screen->display->display, screen->root, screen->display->workareaAtom, XA_CARDINAL, 32, PropModeReplace, (unsigned char *) data2, 4);
-    compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," Work to %d/%d %d/%d = %d",0,0, width, height, work);
+    //compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," Work to %d/%d %d/%d = %d",0,0, width, height, work);
     //compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," Geo = %d, Work = %d",geo, work);
 
     unsigned long data3[2][2];
@@ -39,7 +40,7 @@ fix_XDesktopSize (CompScreen * screen, unsigned long width, unsigned long height
     data3[1][0] = width;
     data3[1][1] = height;
     view = XChangeProperty(screen->display->display, screen->root, screen->display->desktopViewportAtom, XA_CARDINAL, 32, PropModeReplace, (unsigned char *) data3, 2);
-    compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," View to %d/%d %d/%d = %d", 0, 0, width, height, view);
+    //compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," View to %d/%d %d/%d = %d", 0, 0, width, height, view);
 
     screen->workArea.width = width;
     screen->workArea.height = height;
@@ -68,7 +69,7 @@ fix_CompFullscreenOutput(CompPlugin *plugin, CompScreen * screen, edgeblendScree
         /* switch overlapping output */
         ebs->hadOverlappingOutputs      = screen->hasOverlappingOutputs;
         screen->hasOverlappingOutputs   = TRUE;
-        compLogMessage ("edgeblend::fix_env->fullscreenoutput", CompLogLevelInfo," true");
+        //compLogMessage ("edgeblend::fix_env->fullscreenoutput", CompLogLevelInfo," true");
     } else {
         /* reset force independet output */
         CompOptionValue option;
@@ -77,7 +78,7 @@ fix_CompFullscreenOutput(CompPlugin *plugin, CompScreen * screen, edgeblendScree
 
         /* reset overlapping output */
         screen->hasOverlappingOutputs = ebs->hadOverlappingOutputs;
-        compLogMessage ("edgeblend::fix_env->fullscreenoutput", CompLogLevelInfo," false");
+        //compLogMessage ("edgeblend::fix_env->fullscreenoutput", CompLogLevelInfo," false");
     }
 
 }
@@ -92,19 +93,10 @@ fix_CompFullscreenOutput(CompPlugin *plugin, CompScreen * screen, edgeblendScree
  */
 void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode)
 {
-    compLogMessage ("edgeblend::fix_env->hidecursor", CompLogLevelInfo," true????? %d", displayPrivateIndex);
-
     /* when we can not hide we should not try */
     if (!ebs->fixesSupported) return;
 
     if (mode == TRUE) {
-        /*if (!zs->opt[SOPT_SCALE_MOUSE].value.b) return;
-        if (!zs->cursorInfoSelected){
-            zs->cursorInfoSelected = TRUE;
-            XFixesSelectCursorInput (s->display->display, s->root, XFixesDisplayCursorNotifyMask);
-            zoomUpdateCursor (s, &zs->cursor);
-        } zs->opt[SOPT_HIDE_ORIGINAL_MOUSE].value.b) ??*/
-        
         /* can we? */
         if (ebs->canHideCursor && !ebs->cursorHidden) {
             //poll position handle not nedded since we poll on every draw...
@@ -114,24 +106,19 @@ void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode)
             //hide
             ebs->cursorHidden = TRUE;
             XFixesHideCursor (screen->display->display, screen->root);
-            compLogMessage ("edgeblend::fix_env->hidecursor", CompLogLevelInfo," true");
+//            compLogMessage ("edgeblend::fix_env->hidecursor", CompLogLevelInfo," true");
         }      
     } else {
-        /*if (zs->cursorInfoSelected) {
-            zs->cursorInfoSelected = FALSE;
-            XFixesSelectCursorInput (s->display->display, s->root, 0);
-        }
-        if (zs->cursor.isSet) {freeCursor (&zs->cursor);}*/
         /* can we? (since it's hidden we can ;) */
         if (ebs->cursorHidden) {
             //stop polling not needed since we do not use the handle
             //(*ebs->mpFunc->removePositionPolling) (screen, ebs->pollHandle);
-            ebs->pollHandle = NULL;
+            ebs->pollHandle = (PositionPollingHandle) NULL;
             ebs->mpFunc     = NULL;
             //show XCursor
             ebs->cursorHidden = FALSE;
             XFixesShowCursor (screen->display->display, screen->root);
-            compLogMessage ("edgeblend::fix_env->hidecursor", CompLogLevelInfo," false");
+  //          compLogMessage ("edgeblend::fix_env->hidecursor", CompLogLevelInfo," false");
         }
     }
 }
@@ -156,6 +143,9 @@ Bool fix_CursorPoll(CompScreen * screen, edgeblendScreen * ebs)
 }
 
 
+
+void restore_CompScreenWorkArea(CompScreen * screen, edgeblendScreen * ebs);
+Bool save_CompScreenWorkArea(CompScreen * screen, edgeblendScreen * ebs);
 /**
  * Fixes the Workarea of compiz, by calling updateWorkareaForScreen(screen), 
  * by changing the extends of the outputs, after backup
@@ -168,25 +158,42 @@ Bool
 fix_CompScreenWorkarea(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
 {
     int     i;
+    int     row, col, height, width, overlap, cols, rows;
+    div_t   tmp;
     if (mode == TRUE) {
+        //needs a correct config
+        if (!ebs->outputCfg) {
+            return FALSE;
+        }
+        //backup old cfg
         if (!save_CompScreenWorkArea(screen, ebs)) {
             return FALSE;
         }
 
+        cols    = ebs->outputCfg->grid.cols;
+        rows    = ebs->outputCfg->grid.rows;
+        height  = ebs->outputCfg->cell.height;
+        width   = ebs->outputCfg->cell.width;
+        overlap = ebs->outputCfg->grid.blend;
+
         for(i = 0; i < screen->nOutputDev; i++) {
-            printOutputdev(&screen->outputDev[i]);
-            if (i == 1) { //leafe 0 as it is
-                /* @TODO dynamic list */
-                screen->outputDev[i].region.extents.x1 = 1280;
-                screen->outputDev[i].region.extents.y1 = 0;
-                screen->outputDev[i].region.extents.x2 = 1280-200 + 1280;
-                screen->outputDev[i].region.extents.y2 = 1024;
+            tmp = div(screen->outputDev[i].region.extents.x1, width);
+            col = tmp.quot;
+            tmp = div(screen->outputDev[i].region.extents.y1, height);
+            row = tmp.quot;
+
+            if (col > 0) {
+                screen->outputDev[i].region.extents.x1 = col * width;
+                screen->outputDev[i].region.extents.x2 = (col+1) * width - col * overlap;
             }
-            printOutputdev(&screen->outputDev[i]);
+            if (row > 0) {
+                screen->outputDev[i].region.extents.y1 = row * height;
+                screen->outputDev[i].region.extents.y2 = (row+1) * height - row * overlap;
+            }
         }
 
-        screen->width  = 1280 * 2 - 200;
-        screen->height = screen->height;
+        screen->width  = (width  * cols) - ((cols-1) * overlap);
+        screen->height = (height * rows) - ((rows-1) * overlap);
     } else {
         restore_CompScreenWorkArea(screen, ebs);
     }
@@ -249,12 +256,10 @@ restore_CompScreenWorkArea(CompScreen * screen, edgeblendScreen * ebs)
     screen->height  = ebs->orginalWorkarea.orginalHeight;
     if (ebs->orginalWorkarea.outputExtends) {
         for (i=0; i < ebs->orginalWorkarea.nOutputs; i++) {
-            printOutputdev(&screen->outputDev[i]);
             if (ebs->orginalWorkarea.outputExtends[i]) {
                 memcpy(&screen->outputDev[i].region.extents, ebs->orginalWorkarea.outputExtends[i], sizeof(BOX));
                 free(ebs->orginalWorkarea.outputExtends[i]);
             }
-            printOutputdev(&screen->outputDev[i]);
         }
     }
     free(ebs->orginalWorkarea.outputExtends);

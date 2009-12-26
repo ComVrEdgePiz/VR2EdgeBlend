@@ -14,9 +14,9 @@
 #include <compiz-mousepoll.h>
 #include <X11/Xatom.h>
 #include <GL/glu.h>
-#include "edgeblend_options.h"
-#include "debug.h"
 
+#include "edgeblend_options.h"
+#include "output_config.h"
 
 typedef struct _edgeblendDisplay
 {
@@ -41,6 +41,9 @@ typedef struct _edgeblendScreen
     PaintTransformedOutputProc  paintTransformedOutput;
     PaintScreenProc             paintScreen;
     PaintWindowProc             paintWindow;
+
+    /* outputconfig */
+    EdgeblendOutputConfig *     outputCfg;
 
     /* workarea */
     EdgeblendWorkareaFix        orginalWorkarea;
@@ -84,7 +87,7 @@ typedef struct _edgeblendScreen
 extern "C" {
 #endif
 
-    static int displayPrivateIndex = 0;
+    
 
 #ifdef	__cplusplus
 }

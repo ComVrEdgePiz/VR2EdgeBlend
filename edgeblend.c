@@ -24,6 +24,7 @@
 
 #include "fix_env.h"
 
+static int displayPrivateIndex = 0;
 
 /**
  * Enables per screen operations on the context, right before drawing,
@@ -31,17 +32,18 @@
  * @param CompScreen *screen - Compiz Screen
  * @param int        ms      - msec since last draw
  */
+/*
 static void
 edgeblendPreparePaintScreen (CompScreen *screen, int ms)
 {
     EDGEBLEND_SCREEN (screen);
-    CompDisplay *d = screen->display; 
+    //CompDisplay *d = screen->display;
 
     UNWRAP (ebs, screen, preparePaintScreen);
         (*screen->preparePaintScreen) (screen, ms);
     WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
 }
-
+*/
 /**
  * Called enables influence the painting of the howl screen
  *
@@ -50,6 +52,7 @@ edgeblendPreparePaintScreen (CompScreen *screen, int ms)
  * @param int           numOutputs  - #outputs
  * @param unsigned int  mask        - draw-flags
  */
+/*
 static void
 edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
                       int numOutputs, unsigned int mask)
@@ -60,7 +63,7 @@ edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
 	(*screen->paintScreen) (screen, outputs, numOutputs, mask);
     WRAP (ebs, screen, paintScreen, edgeblendPaintScreen);
 }
-
+*/
 
 
 /**
@@ -73,7 +76,9 @@ edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
  * @param int x - x-Pos
  * @param int y - y-Pos
  */
-void drawMouse(int x, int y) {
+static void
+drawMouseCursor(int x, int y)
+{
     glColor4f (1.0, 0.0, 0.0, 0.85);
     glBegin(GL_QUADS);
         glVertex2i(x, y);
@@ -103,8 +108,6 @@ edgeblendPaintOutput (CompScreen              *screen,
 {
     EDGEBLEND_SCREEN (screen);
     
-    CompDisplay *d = screen->display;
-
     CompTransform sTransform = *transform;
 
     Bool status = TRUE;
@@ -112,6 +115,7 @@ edgeblendPaintOutput (CompScreen              *screen,
     float x,y;
     int i;
 
+    int row, col, overlap;
     /* ensure right textures */
     makeScreenCurrent (screen);
 
@@ -128,16 +132,6 @@ edgeblendPaintOutput (CompScreen              *screen,
     /* Save current RasterPosition */
     glPushAttrib(GL_CURRENT_BIT);
 
-    /* 1. Move towards the lower right output of out output-grid and draw then
-     * move from bottom to to and from right to left
-     * @TODO - do like above
-     */
-        //move to 2. output (assuming leftof, 2 * 1280x1024)
-        //copy overlapping area to the outputdevice
-        glRasterPos2i(1280, screen->height);
-        glCopyPixels(1080, 0, 1280, screen->height, GL_COLOR);
-
-
         /* Save every thing*/
         glPushMatrix ();
             glPushAttrib(GL_COLOR_BUFFER_BIT);
@@ -145,32 +139,41 @@ edgeblendPaintOutput (CompScreen              *screen,
                 glEnable (GL_BLEND);
                 glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-                /* 2. We have to draw our replacment Cursor, since the cursor X
+                /* 1. We have to draw our replacment Cursor, since the cursor X
                  * provided is out-of-sync when copy buffer arround.
                  */
                 //fetch current position of the cursor from mousepoll-plugin
                 if (fix_CursorPoll(screen, ebs)) {
-                    x = ebs->mouseX;
-                    y = ebs->mouseY;
-               /* @TODO  needed clipping when at the edge of outputdevices*/
-                    // != left upper output then draw cursor:
-                    if (x > 1080) {
-                        /* if in overlapping area draw two cursors */
-                        if (x < 1280) {
-                            drawMouse(x,y);
-                            drawMouse(x + 200,y);
-                        }
-                        /* else draw cursor here he belongs */
-                        else {
-                            drawMouse(x + 200,y);
-                        }
-                    }
-                    /* draw cursor on the current position */
-                    else {
-                        drawMouse(x,y);
-                    }
+                    drawMouseCursor(ebs->mouseX,ebs->mouseY);
                 }
                 
+                /* 2. Move towards the lower right output of out output-grid and draw then
+                 * move from bottom to to and from right to left
+                 */
+                //move to 2. output (assuming leftof, 2 * 1280x1024)
+                //copy overlapping area to the outputdevice
+                row     = ebs->outputCfg->grid.rows;
+                overlap = ebs->outputCfg->grid.blend;
+                while(row--) {
+                    col = ebs->outputCfg->grid.cols;
+                    while(col--) {
+                        if (row == col && row == 0) {
+                            //first dev, no need to copy 
+                        } else {
+                            glRasterPos2i( col * ebs->outputCfg->cell.width
+                                         , (row+1) * ebs->outputCfg->cell.height);
+
+                            glCopyPixels( (col * ebs->outputCfg->cell.width) - (col * overlap)
+                                        , (row * ebs->outputCfg->cell.height)
+                                        , ebs->outputCfg->cell.width
+                                        , ebs->outputCfg->cell.height
+                                        , GL_COLOR);
+                        }
+                    }
+                }
+
+                
+    
                 /*
                  * 3. Loop over all outputdevices and assign blending, as
                  * configurated
@@ -228,7 +231,7 @@ edgeblendDonePaintScreen (CompScreen * screen)
  * @param CompDisplay   *display    - Compiz Display
  * @param XEvent        *event      - Xserver Event
  */
-void
+static void
 edgeblendHandleEvent (CompDisplay * display, XEvent * event)
 {  
     EDGEBLEND_DISPLAY(display);
@@ -274,7 +277,7 @@ edgeblendLoadConfig (CompDisplay     *display,
 
     if (screen)
     {
-	EDGEBLEND_SCREEN (screen);
+	//EDGEBLEND_SCREEN (screen);
 	damageScreen (screen);
     }
 
@@ -289,14 +292,14 @@ edgeblendLoadConfig (CompDisplay     *display,
  * @param EdgeblendDisplayOptions    num        - Option number see xml/bcop
  *
  */
-void edgeblendNotifyCallback(CompDisplay *display, CompOption *option, EdgeblendDisplayOptions num)
+static void
+edgeblendNotifyCallback(CompDisplay *display, CompOption *option, EdgeblendDisplayOptions num)
 {
-    /* Which Option was cahnged? */
+    /* Which Option was changed? */
     switch (num) {
         case EdgeblendDisplayOptionConfig:
             //reload config
             compLogMessage ("edgeblend", CompLogLevelInfo,"edgeblendNotifyCallback called on option config");
-            compLogMessage ("edgeblend", CompLogLevelInfo," %d",load_config(option->value.s));
             break;
         default:
             //else say something
@@ -324,6 +327,9 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     int major, minor;
     //for mousepolling plugin index
     int index;
+    //tmp pointer for output config data structure
+    EdgeblendOutputConfig * outputconfig;
+    char * filepath;
 
     EDGEBLEND_DISPLAY (screen->display);
     //create screen private data
@@ -332,7 +338,18 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
         return FALSE;
     }
 
-    /* @TODO ensure we have only one screen for the display else return FALSE;*/
+    /* ensure we have only one screen for the display else return FALSE;*/
+    if (screen->next != 0)
+        return FALSE;
+
+    /* load output config */
+    filepath     = edgeblendGetConfig(screen->display);
+    if (!filepath) {
+        return FALSE;
+    }
+    ebs->outputCfg = load_outputconfig("/home/flatline/VR2EdgeBlend/two_head.xml", screen);//filepath);
+    if (!ebs->outputCfg)
+        return FALSE;
 
     /* ensure we can disable the XCursor */
     ebs->fixesSupported = XFixesQueryExtension(screen->display->display, &ebs->fixesEventBase, &ebs->fixesErrorBase);
@@ -360,7 +377,7 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
 
     //switch ENV
     /* fix workarea */
-    if (!fix_CompScreenWorkarea(screen, ebs,TRUE)) {
+    if (!fix_CompScreenWorkarea(screen, ebs, TRUE)) {
         return FALSE;
     }
     /* resize XDesktop */
@@ -370,7 +387,6 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     /* ensure fullscreenoutput is used to render */
     fix_CompFullscreenOutput(plugin, screen, ebs, TRUE);
     
-
 
     /* store private data */
     screen->base.privates[ebd->screenPrivateIndex].ptr = ebs;
@@ -421,6 +437,11 @@ edgeblendFiniScreen (CompPlugin *plugin, CompScreen *screen)
 
     //clear edgeblend
     damageScreen (screen);
+
+    if (ebs->outputCfg) {
+        free(ebs->outputCfg);
+    }
+
     //Free the pointer
     free (ebs);
 }
