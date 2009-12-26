@@ -328,7 +328,6 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     //for mousepolling plugin index
     int index;
     //tmp pointer for output config data structure
-    EdgeblendOutputConfig * outputconfig;
     char * filepath;
 
     EDGEBLEND_DISPLAY (screen->display);
