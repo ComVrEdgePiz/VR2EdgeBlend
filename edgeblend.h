@@ -66,6 +66,9 @@ typedef struct _edgeblendScreen
     int     fixesEventBase;
     int     fixesErrorBase;
 
+    /* blending textures */
+    GLuint* textures;
+    GLuint testtex;
 } edgeblendScreen;
 
 

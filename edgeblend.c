@@ -132,7 +132,7 @@ edgeblendPaintOutput (CompScreen              *screen,
     /* Save current RasterPosition */
     glPushAttrib(GL_CURRENT_BIT);
 
-        /* Save every thing*/
+        /* Save everything*/
         glPushMatrix ();
             glPushAttrib(GL_COLOR_BUFFER_BIT);
                 //we want blend everything at the moment since its cool...
@@ -187,12 +187,16 @@ edgeblendPaintOutput (CompScreen              *screen,
                     }
                        x = screen->outputDev[i].region.extents.x1;
                        y = screen->outputDev[i].region.extents.y1;
-
+//                        glBindTexture(GL_TEXTURE_2D, ebs->textures);
                         glBegin(GL_QUADS);
+                            glTexCoord2f(0.0, 0.0);
                             glVertex2f(x, y);
-                            glVertex2f(x+100.0, y);
-                            glVertex2f(x, y+100.0);
-                            glVertex2f(x+100.0, y+100.0);
+                            glTexCoord2f(1.0, 0.0);
+                            glVertex2f(x+128.0, y);
+                            glTexCoord2f(0.0, 1.0);
+                            glVertex2f(x, y+128.0);
+                            glTexCoord2f(1.0, 1.0);
+                            glVertex2f(x+128.0, y+128.0);
                         glEnd();
                 }
                 /* restore opengl state */
@@ -308,6 +312,130 @@ edgeblendNotifyCallback(CompDisplay *display, CompOption *option, EdgeblendDispl
     }
 }
 
+/**
+ * Creates blending textures for the painting
+ *
+ * @param Compscreen         *screen    - Compiz Screen
+ *
+ */
+static void
+edgeblendCreateTextures(CompScreen *screen)
+{
+  //create texturespace (try to create them on graphics ram)
+  EDGEBLEND_SCREEN(screen);
+  int cols = ebs->outputCfg->grid.cols;
+  int rows = ebs->outputCfg->grid.rows;
+  int width = ebs->outputCfg->cell.width;
+  int height = ebs->outputCfg->cell.height;
+  int numScreens = cols*rows;
+  int size = width * height * 4; //RGBA texture
+  int i,j,n,s;
+  GLuint tex[numScreens];
+  GLuint* pixel;//, r, end;
+  
+  //allocate texture names
+  glGenTextures(numScreens, tex);
+  
+  //store texture names to environment
+  ebs->textures = tex;
+
+  //allocate texturespace in ram
+  pixel = malloc(size);
+  if(!pixel) return ;
+
+  //zeiger auf den wert nach dem letzten pixel (eof)
+  //end = pixel+size;
+  
+  for(s=0;s<numScreens;s++) { //iterate over screens
+    //select current texture
+    glBindTexture(GL_TEXTURE_2D, tex[s]);
+    
+    //select modulate to mix texture with color for shading
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); //GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE
+    //set bilinear, mipmap, overlap filtering -> do not need as our texture will fit the screen //glTexParameterf();
+    
+    //put all pixels to max white and opaque
+    for(i=0;i<size;i++) pixel[i]=255;//for(r=pixel;r<end;r+=4) *r=0xFFFFFFFF;
+    
+    //ebs->outputCfg-> //load different screen definitions
+    
+    //blend defined pixels to black / transparent and/or change some colors (different projectors)
+    for(i=0;i<width;i++){//for(r=pixel,i=0;r<end;i++){
+      //o=r+height;
+      for(j=0;j<height;j++){//for(j=0;r<o;r+=4,j++){ //i and j only define the position i= current width, j= current height (or the other way around)
+        //add some cases here to define a mask that makes sense
+        //switch 
+        n = i*j+j+3;//*(r+3) = *(r+3) - 50; //alpha
+        pixel[n] -= j/5;
+      }
+    }
+    
+    //push pixel data to texture and texture to gl
+    glTexImage2D( GL_TEXTURE_2D    //target
+                , 0                //LOD
+                , GL_RGBA          //internal format
+                , width            //width
+                , height           //height
+                , 0                //no border
+                , GL_RGBA          //use 4 texture components per pixel
+                , GL_UNSIGNED_BYTE //texure components has 1 byte size
+                , pixel            //image data
+                );
+  } //end screen iterator
+  
+  free(pixel);
+  
+  return ; //return nothing, texture names are in the environment
+}
+
+/**
+ * Creates blending textures for the painting
+ *
+ * @param Compscreen         *screen    - Compiz Screen
+ *
+ */
+static void
+edgeblendCreateTestTexture(CompScreen *screen)
+{
+  EDGEBLEND_SCREEN(screen);
+  GLuint texture;
+  GLuint* pixel;
+  int size = 128 * 128 * 4; //128x128 RGBA texture
+  int i,j,n;
+  
+  glGenTextures(1, &texture);
+  ebs->testtex = texture;
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+
+  pixel = malloc(size);
+
+  if(!pixel) return ;
+
+  for(i=0;i<size;i++) pixel[i]=255;
+  
+  for(i=0;i<128;i++){
+    for(j=0;j<128;j++){
+      n = i*j+j+3; //alpha
+      pixel[n] = pixel[n] - (j*2 - 1); 
+    }
+  }
+  
+  glTexImage2D( GL_TEXTURE_2D    //target
+              , 0                //LOD
+              , GL_RGBA          //internal format
+              , 128              //width
+              , 128              //height
+              , 0                //no border
+              , GL_RGBA          //use 4 texture components per pixel
+              , GL_UNSIGNED_BYTE //texure components has 1 byte size
+              , pixel            //image data
+              );
+  
+  free(pixel);
+  
+  return ;//texture;
+}
 
 /******************************************************************************/
 /* Init/Fini - Functions                                                      */
@@ -329,7 +457,7 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     int index;
     //tmp pointer for output config data structure
     char * filepath;
-
+    
     EDGEBLEND_DISPLAY (screen->display);
     //create screen private data
     edgeblendScreen *ebs = (edgeblendScreen *) calloc (1, sizeof (edgeblendScreen) );
@@ -346,7 +474,7 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     if (!filepath) {
         return FALSE;
     }
-    ebs->outputCfg = load_outputconfig("/home/flatline/VR2EdgeBlend/two_head.xml", screen);//filepath);
+    ebs->outputCfg = load_outputconfig("/home/vr2/vr2/VR2EdgeBlend/two_head.xml", screen);//filepath);
     if (!ebs->outputCfg)
         return FALSE;
 
@@ -364,10 +492,10 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     ebs->cursorHidden = FALSE;
     
     if (!checkPluginABI ("mousepoll", MOUSEPOLL_ABIVERSION))
-	return FALSE;
+	    return FALSE;
     
     if (!getPluginDisplayIndex (screen->display, "mousepoll", &index))
-	return FALSE;
+	    return FALSE;
 
     /* grep mousepolling plugin function */
     ebs->mpFunc = screen->display->base.privates[index].ptr;
@@ -389,7 +517,9 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
 
     /* store private data */
     screen->base.privates[ebd->screenPrivateIndex].ptr = ebs;
-    
+
+//    edgeblendCreateTextures(screen);//ebs->outputConfig, screen);
+
     //wrap functions
     //WRAP (ebs, screen, paintScreen,    edgeblendPaintScreen);
     //WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
