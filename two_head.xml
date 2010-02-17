@@ -8,4 +8,17 @@
         <width>1024</width>
         <height>768</height>
     </cell>
+    <screens>
+        <screen>
+            <imagemask>/home/vr2/vr2/VR2EdgeBlend/s1.tga</imagemask>
+        </screen>
+        <screen>
+            <left>
+              <a>2</a>
+            </left>
+            <top></top>
+            <right></right>
+            <bottom></bottom>
+        </screen>
+    </screens>
 </output>

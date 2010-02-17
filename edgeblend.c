@@ -64,6 +64,30 @@ edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
     WRAP (ebs, screen, paintScreen, edgeblendPaintScreen);
 }
 */
+#define WHITE 255
+#define BLACK 0
+//blend linear between function and mask border
+#define BLEND_LINEAR(r, y) ((r<=y)?WHITE:(GLuint)((WHITE*y)/r))
+#define INV_BLEND_LINEAR(r, y) (WHITE - BLEND_LINEAR(r, y))
+#define CLIP_TO_BYTE(c) ((c<BLACK)?BLACK:(c>WHITE)?WHITE:c)
+
+//assumes that x-axis is the current spoted border
+// and y-axis is at x=0
+// returns the value to be substracted from the default color
+GLuint
+blendFunc(int x, int y, double a, double b, double c) {
+ return
+  (a==0.0)
+  ?(b==0.0)
+    ?(c==0.0)
+      ? WHITE
+      : INV_BLEND_LINEAR(c, y)//c
+    : INV_BLEND_LINEAR(b*x+c, y)//b*x+c
+  :(b==0.0)
+    ? INV_BLEND_LINEAR(a*x*x+c, y)//a*x^2+c
+    : INV_BLEND_LINEAR(a*x*x+b*x+c, y)//a*x^2+b*x+c
+  ;
+}
 
 
 /**
@@ -330,8 +354,9 @@ edgeblendCreateTextures(CompScreen *screen)
   int numScreens = cols*rows;
   int size = width * height * 4; //RGBA texture
   int i,j,n,s;
-  GLuint tex[numScreens];
+  GLuint tex[numScreens], c;
   GLuint* pixel;//, r, end;
+  EdgeblendOutputScreen scrcfg;
   
   //allocate texture names
   glGenTextures(numScreens, tex);
@@ -353,34 +378,56 @@ edgeblendCreateTextures(CompScreen *screen)
     //select modulate to mix texture with color for shading
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); //GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE
     //set bilinear, mipmap, overlap filtering -> do not need as our texture will fit the screen //glTexParameterf();
-    
-    //put all pixels to max white and opaque
-    for(i=0;i<size;i++) pixel[i]=255;//for(r=pixel;r<end;r+=4) *r=0xFFFFFFFF;
+
+    scrcfg = ebs->outputCfg->screens[s];
     
     //ebs->outputCfg-> //load different screen definitions
+    if(scrcfg.imagepath) {
+      //load texture from image
+      
+      //TODO
     
-    //blend defined pixels to black / transparent and/or change some colors (different projectors)
-    for(i=0;i<width;i++){//for(r=pixel,i=0;r<end;i++){
-      //o=r+height;
-      for(j=0;j<height;j++){//for(j=0;r<o;r+=4,j++){ //i and j only define the position i= current width, j= current height (or the other way around)
-        //add some cases here to define a mask that makes sense
-        //switch 
-        n = i*j+j+3;//*(r+3) = *(r+3) - 50; //alpha
-        pixel[n] -= j/5;
+    } else {//generate texture mask by function
+      //put all pixels to max white and opaque
+      for(i=0;i<size;i++) pixel[i]=WHITE;//for(r=pixel;r<end;r+=4) *r=0xFFFFFFFF;
+      
+      //blend defined pixels to black / transparent and/or change some colors (different projectors)
+      for(i=0;i<width;i++){//for(r=pixel,i=0;r<end;i++){
+        //o=r+height;
+        for(j=0;j<height;j++){//for(j=0;r<o;r+=4,j++){ //i and j only define the position i= current width, j= current height (or the other way around)
+          //add some cases here to define a mask that makes sense
+          // x ist immer die kante, der 0-punkt des koordinatensystems der aktuellen blending func
+          // ist immer an dem linken ende der kante (die kante ist die nächste betrachtete)
+          // in gl koordinaten wäre für die "top" kante somit der punkt 1.0/1.0 der 0-punkt
+          //left x= height-j, y= i
+          c = blendFunc(height-j, i, scrcfg.left.a, scrcfg.left.b, scrcfg.left.c);
+          //top x= width-i, y= height-j
+          c += blendFunc(width-i, height-j, scrcfg.top.a, scrcfg.top.b, scrcfg.top.c);
+          //right x=  j, y= width-i 
+          c += blendFunc(j, width-i, scrcfg.right.a, scrcfg.right.b, scrcfg.right.c);
+          //bottom x= i, y= j
+          c += blendFunc(i, j, scrcfg.bottom.a, scrcfg.bottom.b, scrcfg.bottom.c);
+          
+          c = CLIP_TO_BYTE(c);
+          
+          n = i*j+j;//current pixel to work with
+          
+          pixel[n] = pixel[n+1] = pixel[n+2] = c; //reduce only color, not alpha
+        }
       }
-    }
-    
-    //push pixel data to texture and texture to gl
-    glTexImage2D( GL_TEXTURE_2D    //target
-                , 0                //LOD
-                , GL_RGBA          //internal format
-                , width            //width
-                , height           //height
-                , 0                //no border
-                , GL_RGBA          //use 4 texture components per pixel
-                , GL_UNSIGNED_BYTE //texure components has 1 byte size
-                , pixel            //image data
-                );
+      
+      //push pixel data to texture and texture to gl
+      glTexImage2D( GL_TEXTURE_2D    //target
+                  , 0                //LOD
+                  , GL_RGBA          //internal format
+                  , width            //width
+                  , height           //height
+                  , 0                //no border
+                  , GL_RGBA          //use 4 texture components per pixel
+                  , GL_UNSIGNED_BYTE //texure components has 1 byte size
+                  , pixel            //image data
+                  );
+    }//end if no image for mask
   } //end screen iterator
   
   free(pixel);
