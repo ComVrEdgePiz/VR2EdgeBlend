@@ -76,12 +76,14 @@ parse_outputconfig(xmlNode *root, EdgeblendOutputConfig *config)
     xmlNode *option     = NULL;
     xmlNode *subsection = NULL;
     xmlNode *subsubsection = NULL;
+    int screensFound = 0;
+    int screensAvalible = 0;
     
-    if (3 <= xmlChildElementCount(root)) {
+    if (2 <= xmlChildElementCount(root)) {
+        //parse Grid
         for (section = root->children; section; section = section->next) {
-            for (option = section->children; option; option = option->next) {
-
-                if (strcmp((char *)section->name, "grid") == 0) {
+            if (strcmp((char *)section->name, "grid") == 0) {
+                for (option = section->children; option; option = option->next) {
                     if (FALSE) {
                         //....
                     } else if (strcmp((char*)option->name, "rows") == 0) {
@@ -90,47 +92,61 @@ parse_outputconfig(xmlNode *root, EdgeblendOutputConfig *config)
                         config->grid.cols  = atoi((char*)option->children->content);
                     } else if (strcmp((char*)option->name, "blend") == 0) {
                         config->grid.blend = atoi((char*)option->children->content);
+                    } else if (strcmp((char*)option->name, "cell") == 0) {
+                        for (subsection = option->children; subsection; subsection = subsection->next) {
+                            if (FALSE) {
+                                //....
+                            } else if (strcmp((char*)subsection->name, "height") == 0) {
+                                config->cell.height = atoi((char*)subsection->children->content);
+                            } else if (strcmp((char*)subsection->name, "width") == 0) {
+                                config->cell.width  = atoi((char*)subsection->children->content);
+                            } //option check
+                        }
                     }
-                } else if (strcmp((char*)section->name, "cell") == 0) {
-                    if (FALSE) {
-                        //....
-                    } else if (strcmp((char*)option->name, "height") == 0) {
-                        config->cell.height = atoi((char*)option->children->content);
-                    } else if (strcmp((char*)option->name, "width") == 0) {
-                        config->cell.width  = atoi((char*)option->children->content);
-                    } //option check
-                } else if (strcmp((char*)section->name, "screens") == 0) {
-                  int s = config->grid.cols * config->grid.rows;
-                  config->screens = allocate_screenconfig(s);
-                  initialize_screens(config->screens,s);
-                  int i;
-                  for (i = 0, subsection = option->children; i<s; subsection = subsection->next, i++) {
-                    if (!subsection)
-                      compLogMessage ("edgeblend::output_config->parse_outputconfig", CompLogLevelError, "not enough screen definitions for grid");
-                    if (strcmp((char*)option->name, "screen") == 0) {
-                        if (strcmp((char*)subsection->name, "imagemask") == 0) {
-                            char* s = allocate_screenpath(strlen((char*)option->children->content));
-                            s = (char*)option->children->content;
-                            config->screens[i].imagepath = s;
-                        } else {
-                          for (subsubsection = subsection->children; subsubsection; subsubsection = subsubsection->next) {
-                            if (strcmp((char*)subsection->name, "left") == 0) {
-                              parse_screen_config(subsubsection, &(config->screens[i].left));
-                            } else if (strcmp((char*)subsection->name, "top") == 0) {
-                              parse_screen_config(subsubsection, &(config->screens[i].top));
-                            } else if (strcmp((char*)subsection->name, "right") == 0) {
-                              parse_screen_config(subsubsection, &(config->screens[i].right));
-                            } else if (strcmp((char*)subsection->name, "bottom") == 0) {
-                              parse_screen_config(subsubsection, &(config->screens[i].bottom));
-                            }
-                          }
-                        } //option check
-                    } //subsection check
-                  }
-                } // sectioncheck
-            } //option
-        } //section
+                }
+            }
+        }
 
+        screensAvalible = config->grid.cols * config->grid.rows;
+        config->screens = allocate_screenconfig(screensAvalible);
+        initialize_screens(config->screens, screensAvalible);
+        
+        //parse Screens
+        for (section = root->children; section; section = section->next) {
+            if (strcmp((char *)section->name, "screens") == 0) {
+                for (option = section->children; option; option = option->next) {
+                    if (strcmp((char*)option->name, "screen") == 0 && screensFound<screensAvalible) {
+                        
+                        for (subsection = option->children; subsection; subsection = subsection->next) {                        
+
+                            if (strcmp((char*)subsection->name, "imagemask") == 0) {
+                                config->screens[screensFound].imagepath = allocate_screenpath(strlen((char*)subsection->children->content));
+                                memcpy(config->screens[screensFound].imagepath, (void*)subsection->children->content, strlen((char*)subsection->children->content));
+                                continue;
+                            } else if (strcmp((char*)subsection->name, "left") == 0) {
+                                for (subsubsection = subsection->children; subsubsection; subsubsection = subsubsection->next) {
+                                  parse_screen_config(subsubsection, &(config->screens[screensFound].left));
+                                }
+                            } else if (strcmp((char*)subsection->name, "top") == 0) {
+                                for (subsubsection = subsection->children; subsubsection; subsubsection = subsubsection->next) {
+                                  parse_screen_config(subsubsection, &(config->screens[screensFound].top));
+                                }
+                            } else if (strcmp((char*)subsection->name, "right") == 0) {
+                                for (subsubsection = subsection->children; subsubsection; subsubsection = subsubsection->next) {
+                                  parse_screen_config(subsubsection, &(config->screens[screensFound].right));
+                                }
+                            } else if (strcmp((char*)subsection->name, "bottom") == 0) {
+                                for (subsubsection = subsection->children; subsubsection; subsubsection = subsubsection->next) {
+                                  parse_screen_config(subsubsection, &(config->screens[screensFound].bottom));
+                                }
+                            }
+                            
+                        }
+                        screensFound++;
+                    }
+                }
+            }
+        }
         configCheck =  (config->grid.blend  > 0)
                     && (config->grid.rows   > 0)
                     && (config->grid.cols   > 0)
@@ -138,15 +154,18 @@ parse_outputconfig(xmlNode *root, EdgeblendOutputConfig *config)
                     && (config->cell.width  > 0)
                     && (config->cell.height > config->grid.blend)
                     && (config->cell.width  > config->grid.blend)
-                    && ( (config->grid.rows + config->grid.cols) > 2);
-               
+                    && ( (config->grid.rows + config->grid.cols) > 2)
+                    && (screensFound == screensAvalible); //due to for no +1 for foundscreens
+
         compLogMessage ("edgeblend::output_config->load_outputconfig",
                         CompLogLevelInfo,
-                        "Cell: %d/%d  Grid: %dx%d (%d)",
+                        "Cell: %d/%d  Grid: %dx%d (%d) screencfgs: %d/%d",
                         config->cell.width, config->cell.height,
-                        config->grid.rows, config->grid.cols, config->grid.blend);
+                        config->grid.rows, config->grid.cols, config->grid.blend,
+                        screensFound, screensAvalible);
         return configCheck;
-    }
+    }    
+    
     return FALSE;
 }
 

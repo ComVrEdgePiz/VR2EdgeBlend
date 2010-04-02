@@ -60,6 +60,11 @@ typedef struct _edgeblendScreen
     time_t                  lastChange;
     int                     mouseX;
     int                     mouseY;
+    int                     cursorHotX;
+    int                     cursorHotY;
+    int                     cursorWidth;
+    int                     cursorHeight;
+    GLuint                  cursorTexture;
 
     /* fixes */
     Bool    fixesSupported;

@@ -3,14 +3,17 @@
         <rows>1</rows>
         <cols>2</cols>
         <blend>100</blend>
+        <cell>
+            <width>1280</width>
+            <height>1024</height>
+        </cell>
     </grid>
-    <cell>
-        <width>1024</width>
-        <height>768</height>
-    </cell>
     <screens>
         <screen>
-            <imagemask>/home/vr2/vr2/VR2EdgeBlend/s1.tga</imagemask>
+            <left></left>
+            <top></top>
+            <right><a>2</a></right>
+            <bottom></bottom>
         </screen>
         <screen>
             <left>
@@ -21,4 +24,8 @@
             <bottom></bottom>
         </screen>
     </screens>
+    <foo>
+        <imagemask>/home/flatline/VR2EdgeBlend/s1.tga</imagemask>
+    </foo>
 </output>
+

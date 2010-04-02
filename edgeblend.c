@@ -20,8 +20,6 @@
  */
 #include "edgeblend.h"
 
-#include "parser.h"
-
 #include "fix_env.h"
 
 static int displayPrivateIndex = 0;
@@ -89,6 +87,51 @@ blendFunc(int x, int y, double a, double b, double c) {
   ;
 }
 
+static void
+updateMouseCursor(edgeblendScreen *ebs, Display *display)
+{
+    unsigned char *pixels;
+    int i;
+
+    XFixesCursorImage *ci = XFixesGetCursorImage(display);
+    /* Hack to avoid changing to an invisible (bugged)cursor image.
+     * Example: The animated Firefox cursors.
+     */
+    if (ci->width <= 1 && ci->height <= 1)
+    {
+	XFree (ci);
+	return;
+    }
+    
+    ebs->cursorWidth    = ci->width;    /* height*/
+    ebs->cursorHeight   = ci->height;   /* width*/
+    ebs->cursorHotX     = ci->xhot;     /* fix-center-x*/
+    ebs->cursorHotY     = ci->yhot;     /* fix-center-y*/
+
+    pixels = malloc(ci->width * ci->height * 4);
+    if (!pixels) {
+	XFree (ci);
+	return;
+    } else {
+        for (i = 0; i < ci->width * ci->height; i++)
+        {
+            unsigned long pix = ci->pixels[i];
+            pixels[i * 4] = pix & 0xff;
+            pixels[(i * 4) + 1] = (pix >> 8) & 0xff;
+            pixels[(i * 4) + 2] = (pix >> 16) & 0xff;
+            pixels[(i * 4) + 3] = (pix >> 24) & 0xff;
+        }
+
+        glEnable (GL_TEXTURE_RECTANGLE_ARB);
+            glBindTexture (GL_TEXTURE_RECTANGLE_ARB, ebs->cursorTexture);
+            glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, ebs->cursorWidth,
+                          ebs->cursorHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+            glBindTexture (GL_TEXTURE_RECTANGLE_ARB, 0);
+        glDisable (GL_TEXTURE_RECTANGLE_ARB);
+        XFree (ci);
+        free (pixels);
+   }
+}
 
 /**
  * Draws a rect....
@@ -101,15 +144,27 @@ blendFunc(int x, int y, double a, double b, double c) {
  * @param int y - y-Pos
  */
 static void
-drawMouseCursor(int x, int y)
+drawMouseCursor(edgeblendScreen *ebs, Display *display)
 {
-    glColor4f (1.0, 0.0, 0.0, 0.85);
-    glBegin(GL_QUADS);
-        glVertex2i(x, y);
-        glVertex2i(x+10, y);
-        glVertex2i(x, y+10);
-        glVertex2i(x+10, y+10);
-    glEnd();
+    int x,y;
+    updateMouseCursor(ebs, display);
+    x = ebs->mouseX - ebs->cursorHotX;
+    y = ebs->mouseY - ebs->cursorHotY;
+
+    glEnable (GL_BLEND);
+    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, ebs->cursorTexture);
+    glEnable (GL_TEXTURE_RECTANGLE_ARB);
+
+    glBegin (GL_QUADS);
+        glTexCoord2d (0, 0);                                glVertex2f (x, y);
+        glTexCoord2d (0, ebs->cursorHeight);                glVertex2f (x, y + ebs->cursorHeight);
+        glTexCoord2d (ebs->cursorWidth, ebs->cursorHeight); glVertex2f (x + ebs->cursorWidth, y + ebs->cursorHeight);
+        glTexCoord2d (ebs->cursorWidth, 0);                 glVertex2f (x + ebs->cursorWidth, y);
+    glEnd ();
+    glDisable (GL_BLEND);
+    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, 0);
+    glDisable (GL_TEXTURE_RECTANGLE_ARB);
+    glPopMatrix ();
 }
 
 /**
@@ -168,9 +223,9 @@ edgeblendPaintOutput (CompScreen              *screen,
                  */
                 //fetch current position of the cursor from mousepoll-plugin
                 if (fix_CursorPoll(screen, ebs)) {
-                    drawMouseCursor(ebs->mouseX,ebs->mouseY);
+                    drawMouseCursor(ebs, screen->display->display);
                 }
-                
+                glEnable (GL_BLEND);
                 /* 2. Move towards the lower right output of out output-grid and draw then
                  * move from bottom to to and from right to left
                  */
@@ -262,8 +317,9 @@ edgeblendDonePaintScreen (CompScreen * screen)
 static void
 edgeblendHandleEvent (CompDisplay * display, XEvent * event)
 {  
-    EDGEBLEND_DISPLAY(display);
+    EDGEBLEND_DISPLAY (display);
     CompScreen *screen = display->screens;
+    EDGEBLEND_SCREEN (screen);
 
     //since we support only one screen we can assume the firstone in the
     //correct one
@@ -272,6 +328,11 @@ edgeblendHandleEvent (CompDisplay * display, XEvent * event)
         if (pointerX > screen->width || pointerY > screen->height)
             warpPointer(screen, 0,0);
     //}
+
+    /**
+     * @TODO react on Cursor-Change Event
+     */
+    
     
     UNWRAP (ebd, display, handleEvent);
         (*display->handleEvent) (display, event);
@@ -518,10 +579,11 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
 
     /* load output config */
     filepath     = edgeblendGetConfig(screen->display);
+    compLogMessage ("edgeblend", CompLogLevelInfo,"edgeblendNotifyCallback called on option %s", filepath);
     if (!filepath) {
         return FALSE;
     }
-    ebs->outputCfg = load_outputconfig("/home/vr2/vr2/VR2EdgeBlend/two_head.xml", screen);//filepath);
+    ebs->outputCfg = load_outputconfig(filepath, screen);
     if (!ebs->outputCfg)
         return FALSE;
 
@@ -560,12 +622,15 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     fix_XCursor(screen, ebs, TRUE);
     /* ensure fullscreenoutput is used to render */
     fix_CompFullscreenOutput(plugin, screen, ebs, TRUE);
-    
 
+    //build cursor
+    glGenTextures (1, &ebs->cursorTexture);
+   
     /* store private data */
     screen->base.privates[ebd->screenPrivateIndex].ptr = ebs;
 
-//    edgeblendCreateTextures(screen);//ebs->outputConfig, screen);
+
+    //edgeblendCreateTextures(screen);//ebs->outputConfig, screen);
 
     //wrap functions
     //WRAP (ebs, screen, paintScreen,    edgeblendPaintScreen);
@@ -659,7 +724,6 @@ edgeblendInitDisplay (CompPlugin  *plugin, CompDisplay *display)
     /* BCOP - Notify-Hooks */
     edgeblendSetConfigNotify    (display, &edgeblendNotifyCallback);
     edgeblendSetReloadNotify    (display, &edgeblendNotifyCallback);
-    edgeblendSetAutoreloadNotify(display, &edgeblendNotifyCallback);
     edgeblendSetShowareasNotify (display, &edgeblendNotifyCallback);
 
     /* WRAP */

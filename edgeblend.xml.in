@@ -21,16 +21,11 @@
           <_short>Config File</_short>
           <_long>Config File.</_long>
           <hints>file;</hints>
-          <default></default>
+          <default>/home/flatline/VR2EdgeBlend/two_head.xml</default>
         </option>
       </group>
       <group>
         <_short>devel</_short>
-        <option name="AutoReload" type="bool">
-          <_short>reloads config for each draw</_short>
-          <_long>reloads config for each draw</_long>
-          <default>false</default>
-        </option>
         <option name="ShowAreas" type="bool">
           <_short>shows areas</_short>
           <_long>shows areas</_long>
