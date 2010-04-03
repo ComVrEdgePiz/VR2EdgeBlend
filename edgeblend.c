@@ -87,6 +87,10 @@ blendFunc(int x, int y, double a, double b, double c) {
   ;
 }
 
+/**
+ * Getting Xorg-Cursor image and store it in gfx-ram:
+ * Taken from the zoom-plugin
+ */
 static void
 updateMouseCursor(edgeblendScreen *ebs, Display *display)
 {
@@ -258,9 +262,10 @@ edgeblendPaintOutput (CompScreen              *screen,
                  * configurated
                  * @TODO
                  */
+                /*
                 for (i = 0; i < screen->nOutputDev; i++) {
                     if (i == 0) {
-                        glColor4f (0.5, 0.5, 0.5, 0.75);
+                        glColor4f (0.0, 0.0, 0.0, 0.75);
                     } else {
                         glColor4f (0.0, 0.5, 0.5, 0.75);
                     }
@@ -277,9 +282,12 @@ edgeblendPaintOutput (CompScreen              *screen,
                             glTexCoord2f(1.0, 1.0);
                             glVertex2f(x+128.0, y+128.0);
                         glEnd();
-                }
+                } */
                 /* restore opengl state */
-                
+                blend(ebs);
+
+
+
                 glDisable(GL_BLEND);
             glPopAttrib();
         glPopMatrix ();
@@ -623,13 +631,14 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     /* ensure fullscreenoutput is used to render */
     fix_CompFullscreenOutput(plugin, screen, ebs, TRUE);
 
-    //build cursor
+    //build cursor-texture name
     glGenTextures (1, &ebs->cursorTexture);
+
    
     /* store private data */
     screen->base.privates[ebd->screenPrivateIndex].ptr = ebs;
 
-
+    generateBlendingTexture(ebs);
     //edgeblendCreateTextures(screen);//ebs->outputConfig, screen);
 
     //wrap functions
