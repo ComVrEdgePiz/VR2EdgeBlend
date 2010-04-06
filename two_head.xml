@@ -4,28 +4,26 @@
         <cols>2</cols>
         <blend>100</blend>
         <cell>
-            <width>1280</width>
-            <height>1024</height>
+            <width>1024</width>
+            <height>768</height>
         </cell>
     </grid>
     <screens>
         <screen>
-            <left></left>
-            <top></top>
-            <right><a>2</a></right>
-            <bottom></bottom>
+            <left><c>50</c></left>
+            <top><c>30</c></top>
+            <right><c>40</c></right>
+            <bottom><c>35</c></bottom>
         </screen>
         <screen>
-            <left>
-              <a>2</a>
-            </left>
-            <top></top>
-            <right></right>
-            <bottom></bottom>
+            <left><c>50</c></left>
+            <top><c>30</c></top>
+            <right><c>40</c></right>
+            <bottom><c>20</c></bottom>
         </screen>
     </screens>
-    <foo>
-        <imagemask>/home/flatline/VR2EdgeBlend/s1.tga</imagemask>
-    </foo>
+    <foos>
+        <imagemask>/home/vr2/vr2/VR2EdgeBlend/s1.tga</imagemask>
+    </foos>
 </output>
 

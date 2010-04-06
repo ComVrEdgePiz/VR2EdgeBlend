@@ -61,7 +61,7 @@ edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
 	(*screen->paintScreen) (screen, outputs, numOutputs, mask);
     WRAP (ebs, screen, paintScreen, edgeblendPaintScreen);
 }
-*/
+*//*
 #define WHITE 255
 #define BLACK 0
 //blend linear between function and mask border
@@ -85,7 +85,7 @@ blendFunc(int x, int y, double a, double b, double c) {
     ? INV_BLEND_LINEAR(a*x*x+c, y)//a*x^2+c
     : INV_BLEND_LINEAR(a*x*x+b*x+c, y)//a*x^2+b*x+c
   ;
-}
+}*/
 
 /**
  * Getting Xorg-Cursor image and store it in gfx-ram:
@@ -410,7 +410,7 @@ edgeblendNotifyCallback(CompDisplay *display, CompOption *option, EdgeblendDispl
  *
  * @param Compscreen         *screen    - Compiz Screen
  *
- */
+ *//*
 static void
 edgeblendCreateTextures(CompScreen *screen)
 {
@@ -502,7 +502,7 @@ edgeblendCreateTextures(CompScreen *screen)
   free(pixel);
   
   return ; //return nothing, texture names are in the environment
-}
+}*/
 
 /**
  * Creates blending textures for the painting
