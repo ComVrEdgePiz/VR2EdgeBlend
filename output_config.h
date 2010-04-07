@@ -28,7 +28,6 @@ typedef struct _EdgeblendOutputBlendFunc {
 } EdgeblendOutputBlendFunc;
 
 typedef struct _EdgeblendOutputScreen {
-    char* imagepath;
     EdgeblendOutputBlendFunc left;
     EdgeblendOutputBlendFunc top;
     EdgeblendOutputBlendFunc right;
@@ -39,6 +38,7 @@ typedef struct _EdgeblendOutputConfig {
     EdgeblendOutputGrid      grid;
     EdgeblendOutputCell      cell;
     EdgeblendOutputScreen*   screens;
+    char* imagepath;
 } EdgeblendOutputConfig;
 
 

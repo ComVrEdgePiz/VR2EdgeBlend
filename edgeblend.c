@@ -21,6 +21,7 @@
 #include "edgeblend.h"
 
 #include "fix_env.h"
+#include "blending.h"
 
 static int displayPrivateIndex = 0;
 
@@ -510,7 +511,7 @@ edgeblendCreateTextures(CompScreen *screen)
  * @param Compscreen         *screen    - Compiz Screen
  *
  */
-static void
+/*static void
 edgeblendCreateTestTexture(CompScreen *screen)
 {
   EDGEBLEND_SCREEN(screen);
@@ -551,7 +552,7 @@ edgeblendCreateTestTexture(CompScreen *screen)
   free(pixel);
   
   return ;//texture;
-}
+}*/
 
 /******************************************************************************/
 /* Init/Fini - Functions                                                      */

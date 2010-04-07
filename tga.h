@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <GL/glu.h>
+
 
 typedef struct {
    char  idlength; //-> 0
@@ -23,12 +25,16 @@ typedef struct {
 
 typedef struct {
   TGAHEADER header; //(18 byte)
-  char* data;
+  unsigned char* data;
 } TGA;
 
-void writeTGA(TGA tga, char* filename);
+void writeTGA(TGA* tga, char* filename);
 
 TGA* readTGA(char* filename);
+
+TGA* texToTGA(GLfloat* tex, int width, int height);
+
+void tgaToTex(TGA* img, GLfloat* tex);
 
 #ifdef	__cplusplus
 }

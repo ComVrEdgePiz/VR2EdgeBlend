@@ -1,4 +1,5 @@
 #include "blending.h"
+#include "tga.h"
 #include <stdlib.h>
 
 /* TODO
@@ -46,6 +47,7 @@ Bool generateBlendingTexture(edgeblendScreen *screen)
     GLfloat* pixel;
     GLuint texture;
     EdgeblendOutputScreen cell;
+    TGA* tga=0;
 
     displayWidth    = screen->orginalWorkarea.orginalWidth;
     displayHeight   = screen->orginalWorkarea.orginalHeight;
@@ -70,55 +72,72 @@ Bool generateBlendingTexture(edgeblendScreen *screen)
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture);
     //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 
-    //forloopings
-    for (i=0; i < displayHeight; i++)
-    {
-        divVert = div(i, cellHeight);
-        posY = divVert.rem;
-        outputRow = divVert.quot * screen->outputCfg->grid.cols;
+    if(screen->outputCfg->imagepath == NULL) {
+      //forloopings
+      for (i=0; i < displayHeight; i++)
+      {
+          divVert = div(i, cellHeight);
+          posY = divVert.rem;
+          outputRow = divVert.quot * screen->outputCfg->grid.cols;
+          
+          for (j=0; j < displayWidth; j++)
+          {
+              divHoriz = div(j, cellWidth);
+              posX = divHoriz.rem;
+              //from left to right from top to bottom
+              output = divHoriz.quot + outputRow;
+              
+              cell = screen->outputCfg->screens[output];
+
+              arrayPos = (i * displayWidth + j) * colorspace;/*
+              pixel[arrayPos + 3] = blendFunct(posY, posX, cell.left.a, cell.left.b, cell.left.c);
+              pixel[arrayPos + 3] = blendFunct(posY, cellWidth-posX, cell.right.a, cell.right.b+, cell.right.c);
+              pixel[arrayPos + 3] = blendFunct(posX, posY, cell.top.a, cell.top.b, cell.top.c);
+              pixel[arrayPos + 3] = blendFunct(posX, cellHeight-posY, cell.bottom.a, cell.bottom.b, cell.bottom.c);*/
+              if ((posX - cell.left.c) < 0) {
+                  pixel[arrayPos + 3] = (GLfloat) ((cell.left.c-posX) / (GLfloat)cell.left.c);
+              } else if((posX + cell.right.c) >= cellWidth) {
+                  pixel[arrayPos + 3] = (GLfloat) ((cell.right.c+posX-cellWidth) / (GLfloat)cell.right.c);
+              }
+              // TODO += is bad blending for grids, find a better one
+              if((posY - cell.top.c) < 0) {
+                  pixel[arrayPos + 3] += (GLfloat) ((cell.top.c-posY) / (GLfloat)cell.top.c);
+              } else if((posY + cell.bottom.c) >= cellHeight) {
+                  pixel[arrayPos + 3] += (GLfloat) ((cell.bottom.c+posY-cellHeight) / (GLfloat)cell.bottom.c);
+              }
+
+          }
+      }
+
+      //save texture
+      tga = texToTGA(pixel, displayWidth, displayHeight);
+      if(tga != NULL)
+        writeTGA(tga, "/home/vr2/vr2/test.tga");
         
-        for (j=0; j < displayWidth; j++)
-        {
-            divHoriz = div(j, cellWidth);
-            posX = divHoriz.rem;
-            //from left to right from top to bottom
-            output = divHoriz.quot + outputRow;
-            
-            cell = screen->outputCfg->screens[output];
+    } else { // imagepath not null
+    
+      tga = readTGA(screen->outputCfg->imagepath);
 
-            arrayPos = (i * displayWidth + j) * colorspace;/*
-            pixel[arrayPos + 3] = blendFunct(posY, posX, cell.left.a, cell.left.b, cell.left.c);
-            pixel[arrayPos + 3] = blendFunct(posY, cellWidth-posX, cell.right.a, cell.right.b+, cell.right.c);
-            pixel[arrayPos + 3] = blendFunct(posX, posY, cell.top.a, cell.top.b, cell.top.c);
-            pixel[arrayPos + 3] = blendFunct(posX, cellHeight-posY, cell.bottom.a, cell.bottom.b, cell.bottom.c);*/
-            if ((posX - cell.left.c) < 0) {
-                pixel[arrayPos + 3] = (GLfloat) ((cell.left.c-posX) / (GLfloat)cell.left.c);
-            } else if((posX + cell.right.c) >= cellWidth) {
-                pixel[arrayPos + 3] = (GLfloat) ((cell.right.c+posX-cellWidth) / (GLfloat)cell.right.c);
-            }
-            // TODO += is bad blending for grids, find a better one
-            if((posY - cell.top.c) < 0) {
-                pixel[arrayPos + 3] += (GLfloat) ((cell.top.c-posY) / (GLfloat)cell.top.c);
-            } else if((posY + cell.bottom.c) >= cellHeight) {
-                pixel[arrayPos + 3] += (GLfloat) ((cell.bottom.c+posY-cellHeight) / (GLfloat)cell.bottom.c);
-            }
-
-        }
+      if(tga)
+        tgaToTex(tga, pixel);
     }
     
-    glTexImage2D( GL_TEXTURE_RECTANGLE_ARB  //target
-              , 0                //LOD
-              , GL_RGBA          //internal format
-              , displayWidth     //width
-              , displayHeight    //height
-              , 0                //no border
-              , GL_RGBA          //use 4 texture components per pixel
-              , GL_FLOAT //texure components has 1 byte size
-              , pixel            //image data
-              );
+    if(pixel) {
+      glTexImage2D( GL_TEXTURE_RECTANGLE_ARB  //target
+                , 0                //LOD
+                , GL_RGBA          //internal format
+                , displayWidth     //width
+                , displayHeight    //height
+                , 0                //no border
+                , GL_RGBA          //use 4 texture components per pixel
+                , GL_FLOAT //texure components has 1 byte size
+                , pixel            //image data
+                );
 
-    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, 0);
-    free(pixel);
+      glBindTexture (GL_TEXTURE_RECTANGLE_ARB, 0);
+      
+      free(pixel);
+    }
     
     return FALSE;
 }

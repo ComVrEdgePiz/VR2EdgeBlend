@@ -22,7 +22,7 @@ allocate_screenconfig(int i)
 }
 
 static char*
-allocate_screenpath(int i)
+allocate_screenspath(int i)
 {
     char *s = NULL;
 
@@ -35,7 +35,6 @@ static void
 initialize_screens(EdgeblendOutputScreen* s, int m) {
   int i; 
   for(i=0;i<m;i++) {
-    s[i].imagepath = NULL;
     s[i].left.a = s[i].left.b = s[i].left.c = 0.0;
     s[i].top.a = s[i].top.b = s[i].top.c = 0.0;
     s[i].right.a = s[i].right.b = s[i].right.c = 0.0;
@@ -47,11 +46,6 @@ static void
 free_outputconfig(EdgeblendOutputConfig *config)
 {
     if(config->screens){
-      int screens = config->grid.cols*config->grid.rows;
-      int i;
-      for(i=0;i < screens; i++)
-        if(config->screens[i].imagepath)
-          free(config->screens[i].imagepath);
       free(config->screens);
     }
     free(config);
@@ -109,6 +103,7 @@ parse_outputconfig(xmlNode *root, EdgeblendOutputConfig *config)
 
         screensAvalible = config->grid.cols * config->grid.rows;
         config->screens = allocate_screenconfig(screensAvalible);
+        config->imagepath = 0;
         initialize_screens(config->screens, screensAvalible);
         
         //parse Screens
@@ -119,11 +114,7 @@ parse_outputconfig(xmlNode *root, EdgeblendOutputConfig *config)
                         
                         for (subsection = option->children; subsection; subsection = subsection->next) {                        
 
-                            if (strcmp((char*)subsection->name, "imagemask") == 0) {
-                                config->screens[screensFound].imagepath = allocate_screenpath(strlen((char*)subsection->children->content));
-                                memcpy(config->screens[screensFound].imagepath, (void*)subsection->children->content, strlen((char*)subsection->children->content));
-                                continue;
-                            } else if (strcmp((char*)subsection->name, "left") == 0) {
+                            if (strcmp((char*)subsection->name, "left") == 0) {
                                 for (subsubsection = subsection->children; subsubsection; subsubsection = subsubsection->next) {
                                   parse_screen_config(subsubsection, &(config->screens[screensFound].left));
                                 }
@@ -145,6 +136,10 @@ parse_outputconfig(xmlNode *root, EdgeblendOutputConfig *config)
                         screensFound++;
                     }
                 }
+            } else if (strcmp((char *)section->name, "image") == 0) {
+                config->imagepath = allocate_screenspath(strlen((char*)section->children->content));
+                memcpy(config->imagepath, (void*)section->children->content, strlen((char*)section->children->content));
+                screensFound = screensAvalible;
             }
         }
         configCheck =  (config->grid.blend  > 0)
