@@ -234,11 +234,10 @@ edgeblendPaintOutput (CompScreen              *screen,
                 /* 2. Move towards the lower right output of out output-grid and draw then
                  * move from bottom to to and from right to left
                  */
-                //move to 2. output (assuming leftof, 2 * 1280x1024)
-                //copy overlapping area to the outputdevice
-
-
                 buildOutput(ebs);
+                /* 3. assign blending texture
+                 *
+                 */
                 blend(ebs);
 
 
