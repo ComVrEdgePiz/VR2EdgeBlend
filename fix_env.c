@@ -6,23 +6,29 @@
 /**
  * Sets the size of the Desktop of the XDisplay, to get right borders for
  * the mouse
- * @TODO make it work... perhaps since its something about windowhandling it
- *       could be done inside compiz?
- * @TODO store and restore values
  *
  * CompScreen       *screen - Compiz Screen
  * unsigned long    width   - new XDesktop width
  * unsigned long    height  - new XDesktop height
  */
 void
-fix_XDesktopSize (CompScreen * screen, unsigned long width, unsigned long height)
+fix_XDesktopSize (CompScreen * screen, edgeblendScreen * ebs)
 {
+    unsigned long width;
+    unsigned long height;
     int geo, work, view;
     unsigned long data[2];
+
+    //calculate Width and Height like def. Config
+    width  = ebs->outputCfg->grid.cols * ebs->outputCfg->cell.width  - (ebs->outputCfg->grid.blend * (ebs->outputCfg->grid.cols-1));
+    height = ebs->outputCfg->grid.rows * ebs->outputCfg->cell.height - (ebs->outputCfg->grid.blend * (ebs->outputCfg->grid.rows-1));
+
+    compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo,"%d x %d", width, height);
+
     data[0] = (unsigned long) width;
     data[1] = (unsigned long) height;
-
-    geo = XChangeProperty(screen->display->display, screen->root, screen->display->desktopGeometryAtom, XA_CARDINAL, 32, PropModeReplace, (unsigned char *) data, 2);
+    geo = XChangeProperty(screen->display->display, screen->root, screen->display->desktopGeometryAtom
+                         , XA_CARDINAL, 32, PropModeReplace, (unsigned char *) data, 2);
     //compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo," Geo to %d/%d = %d",width, height, geo);
 
     unsigned long data2[4];
@@ -191,9 +197,9 @@ fix_CompScreenWorkarea(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
                 screen->outputDev[i].region.extents.y2 = (row+1) * height - row * overlap;
             }
         }
-
-        screen->width  = (width  * cols) - ((cols-1) * overlap);
-        screen->height = (height * rows) - ((rows-1) * overlap);
+        //disable for compiz viewport in 2D stay the same..
+        //screen->width  = (width  * cols) - ((cols-1) * overlap);
+        //screen->height = (height * rows) - ((rows-1) * overlap);
     } else {
         restore_CompScreenWorkArea(screen, ebs);
     }

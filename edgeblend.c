@@ -22,6 +22,7 @@
 
 #include "fix_env.h"
 #include "blending.h"
+#include "output.h"
 
 static int displayPrivateIndex = 0;
 
@@ -140,7 +141,6 @@ updateMouseCursor(edgeblendScreen *ebs, Display *display)
 
 /**
  * Draws a rect....
- * @TODO Draw the right Cursor
  * @SEE ezoom
  *
  * @TODO better done with ./src/paint.c:415:	(*screen->paintCursor) (c, transform, tmpRegion, 0);
@@ -236,59 +236,13 @@ edgeblendPaintOutput (CompScreen              *screen,
                  */
                 //move to 2. output (assuming leftof, 2 * 1280x1024)
                 //copy overlapping area to the outputdevice
-                row     = ebs->outputCfg->grid.rows;
-                overlap = ebs->outputCfg->grid.blend;
-                while(row--) {
-                    col = ebs->outputCfg->grid.cols;
-                    while(col--) {
-                        if (row == col && row == 0) {
-                            //first dev, no need to copy 
-                        } else {
-                            glRasterPos2i( col * ebs->outputCfg->cell.width
-                                         , (row+1) * ebs->outputCfg->cell.height);
 
-                            glCopyPixels( (col * ebs->outputCfg->cell.width) - (col * overlap)
-                                        , (row * ebs->outputCfg->cell.height)
-                                        , ebs->outputCfg->cell.width
-                                        , ebs->outputCfg->cell.height
-                                        , GL_COLOR);
-                        }
-                    }
-                }
 
-                
-    
-                /*
-                 * 3. Loop over all outputdevices and assign blending, as
-                 * configurated
-                 * @TODO
-                 */
-                /*
-                for (i = 0; i < screen->nOutputDev; i++) {
-                    if (i == 0) {
-                        glColor4f (0.0, 0.0, 0.0, 0.75);
-                    } else {
-                        glColor4f (0.0, 0.5, 0.5, 0.75);
-                    }
-                       x = screen->outputDev[i].region.extents.x1;
-                       y = screen->outputDev[i].region.extents.y1;
-//                        glBindTexture(GL_TEXTURE_2D, ebs->textures);
-                        glBegin(GL_QUADS);
-                            glTexCoord2f(0.0, 0.0);
-                            glVertex2f(x, y);
-                            glTexCoord2f(1.0, 0.0);
-                            glVertex2f(x+128.0, y);
-                            glTexCoord2f(0.0, 1.0);
-                            glVertex2f(x, y+128.0);
-                            glTexCoord2f(1.0, 1.0);
-                            glVertex2f(x+128.0, y+128.0);
-                        glEnd();
-                } */
-                /* restore opengl state */
+                buildOutput(ebs);
                 blend(ebs);
 
 
-
+                /* restore opengl state */
                 glDisable(GL_BLEND);
             glPopAttrib();
         glPopMatrix ();
@@ -406,153 +360,6 @@ edgeblendNotifyCallback(CompDisplay *display, CompOption *option, EdgeblendDispl
     }
 }
 
-/**
- * Creates blending textures for the painting
- *
- * @param Compscreen         *screen    - Compiz Screen
- *
- *//*
-static void
-edgeblendCreateTextures(CompScreen *screen)
-{
-  //create texturespace (try to create them on graphics ram)
-  EDGEBLEND_SCREEN(screen);
-  int cols = ebs->outputCfg->grid.cols;
-  int rows = ebs->outputCfg->grid.rows;
-  int width = ebs->outputCfg->cell.width;
-  int height = ebs->outputCfg->cell.height;
-  int numScreens = cols*rows;
-  int size = width * height * 4; //RGBA texture
-  int i,j,n,s;
-  GLuint tex[numScreens], c;
-  GLuint* pixel;//, r, end;
-  EdgeblendOutputScreen scrcfg;
-  
-  //allocate texture names
-  glGenTextures(numScreens, tex);
-  
-  //store texture names to environment
-  ebs->textures = tex;
-
-  //allocate texturespace in ram
-  pixel = malloc(size);
-  if(!pixel) return ;
-
-  //zeiger auf den wert nach dem letzten pixel (eof)
-  //end = pixel+size;
-  
-  for(s=0;s<numScreens;s++) { //iterate over screens
-    //select current texture
-    glBindTexture(GL_TEXTURE_2D, tex[s]);
-    
-    //select modulate to mix texture with color for shading
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); //GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE
-    //set bilinear, mipmap, overlap filtering -> do not need as our texture will fit the screen //glTexParameterf();
-
-    scrcfg = ebs->outputCfg->screens[s];
-    
-    //ebs->outputCfg-> //load different screen definitions
-    if(scrcfg.imagepath) {
-      //load texture from image
-      
-      //TODO
-    
-    } else {//generate texture mask by function
-      //put all pixels to max white and opaque
-      for(i=0;i<size;i++) pixel[i]=WHITE;//for(r=pixel;r<end;r+=4) *r=0xFFFFFFFF;
-      
-      //blend defined pixels to black / transparent and/or change some colors (different projectors)
-      for(i=0;i<width;i++){//for(r=pixel,i=0;r<end;i++){
-        //o=r+height;
-        for(j=0;j<height;j++){//for(j=0;r<o;r+=4,j++){ //i and j only define the position i= current width, j= current height (or the other way around)
-          //add some cases here to define a mask that makes sense
-          // x ist immer die kante, der 0-punkt des koordinatensystems der aktuellen blending func
-          // ist immer an dem linken ende der kante (die kante ist die nächste betrachtete)
-          // in gl koordinaten wäre für die "top" kante somit der punkt 1.0/1.0 der 0-punkt
-          //left x= height-j, y= i
-          c = blendFunc(height-j, i, scrcfg.left.a, scrcfg.left.b, scrcfg.left.c);
-          //top x= width-i, y= height-j
-          c += blendFunc(width-i, height-j, scrcfg.top.a, scrcfg.top.b, scrcfg.top.c);
-          //right x=  j, y= width-i 
-          c += blendFunc(j, width-i, scrcfg.right.a, scrcfg.right.b, scrcfg.right.c);
-          //bottom x= i, y= j
-          c += blendFunc(i, j, scrcfg.bottom.a, scrcfg.bottom.b, scrcfg.bottom.c);
-          
-          c = CLIP_TO_BYTE(c);
-          
-          n = i*j+j;//current pixel to work with
-          
-          pixel[n] = pixel[n+1] = pixel[n+2] = c; //reduce only color, not alpha
-        }
-      }
-      
-      //push pixel data to texture and texture to gl
-      glTexImage2D( GL_TEXTURE_2D    //target
-                  , 0                //LOD
-                  , GL_RGBA          //internal format
-                  , width            //width
-                  , height           //height
-                  , 0                //no border
-                  , GL_RGBA          //use 4 texture components per pixel
-                  , GL_UNSIGNED_BYTE //texure components has 1 byte size
-                  , pixel            //image data
-                  );
-    }//end if no image for mask
-  } //end screen iterator
-  
-  free(pixel);
-  
-  return ; //return nothing, texture names are in the environment
-}*/
-
-/**
- * Creates blending textures for the painting
- *
- * @param Compscreen         *screen    - Compiz Screen
- *
- */
-/*static void
-edgeblendCreateTestTexture(CompScreen *screen)
-{
-  EDGEBLEND_SCREEN(screen);
-  GLuint texture;
-  GLuint* pixel;
-  int size = 128 * 128 * 4; //128x128 RGBA texture
-  int i,j,n;
-  
-  glGenTextures(1, &texture);
-  ebs->testtex = texture;
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-
-  pixel = malloc(size);
-
-  if(!pixel) return ;
-
-  for(i=0;i<size;i++) pixel[i]=255;
-  
-  for(i=0;i<128;i++){
-    for(j=0;j<128;j++){
-      n = i*j+j+3; //alpha
-      pixel[n] = pixel[n] - (j*2 - 1); 
-    }
-  }
-  
-  glTexImage2D( GL_TEXTURE_2D    //target
-              , 0                //LOD
-              , GL_RGBA          //internal format
-              , 128              //width
-              , 128              //height
-              , 0                //no border
-              , GL_RGBA          //use 4 texture components per pixel
-              , GL_UNSIGNED_BYTE //texure components has 1 byte size
-              , pixel            //image data
-              );
-  
-  free(pixel);
-  
-  return ;//texture;
-}*/
 
 /******************************************************************************/
 /* Init/Fini - Functions                                                      */
@@ -626,7 +433,7 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
         return FALSE;
     }
     /* resize XDesktop */
-    //fix_XDesktopSize(screen, 2160, screen->height);
+    fix_XDesktopSize(screen, ebs);
     /* disable XCursor and enable mousepolling */
     fix_XCursor(screen, ebs, TRUE);
     /* ensure fullscreenoutput is used to render */

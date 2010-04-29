@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 
-    void fix_XDesktopSize (CompScreen * screen, unsigned long width, unsigned long height);
+    void fix_XDesktopSize (CompScreen * screen, edgeblendScreen * ebs);
     void fix_CompFullscreenOutput(CompPlugin * plugin, CompScreen * screen, edgeblendScreen * ebs, Bool mode);
     void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode);
     Bool fix_CursorPoll(CompScreen * screen, edgeblendScreen * ebs);

@@ -2,38 +2,39 @@
     <grid>
         <rows>2</rows>
         <cols>2</cols>
-        <blend>100</blend>
+        <blend>30</blend>
         <cell>
-            <width>512</width>
-            <height>384</height>
+            <width>640</width>
+            <height>1024</height>
         </cell>
     </grid>
     <screens>
         <screen>
-            <left><c>30</c></left>
-            <top><c>30</c></top>
+            <left><c>0</c></left>
+            <top><c>0</c></top>
             <right><c>30</c></right>
             <bottom><c>30</c></bottom>
         </screen>
         <screen>
             <left><c>30</c></left>
+            <top><c>0</c></top>
+            <right><c>0</c></right>
+            <bottom><c>30</c></bottom>
+        </screen>
+        <screen>
+            <left><c>0</c></left>
             <top><c>30</c></top>
             <right><c>30</c></right>
-            <bottom><c>30</c></bottom>
+            <bottom><c>0</c></bottom>
         </screen>
         <screen>
             <left><c>30</c></left>
             <top><c>30</c></top>
-            <right><c>30</c></right>
-            <bottom><c>30</c></bottom>
+            <right><c>0</c></right>
+            <bottom><c>0</c></bottom>
         </screen>
-        <screen>
-            <left><c>30</c></left>
-            <top><c>30</c></top>
-            <right><c>30</c></right>
-            <bottom><c>30</c></bottom>
-        </screen>
+        
     </screens>
-    <image>/home/vr2/vr2/test.tga</image>
+    <!-- <image>/home/vr2/vr2/test.tga</image> -->
 </output>
 
