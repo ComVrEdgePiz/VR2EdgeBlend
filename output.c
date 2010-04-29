@@ -21,7 +21,7 @@ void buildOutput(edgeblendScreen * ebs)
             cposx = (col * width ) - (col * overlap);
             cposy = (irow * height) + (row * overlap);
 
-            compLogMessage (" ", CompLogLevelInfo,"%d/%d %d/%d", rposx, rposy, cposx, cposy);
+            //compLogMessage (" ", CompLogLevelInfo,"%d/%d %d/%d", rposx, rposy, cposx, cposy);
 
             if (rposx != 0 || rposy != height)
             {

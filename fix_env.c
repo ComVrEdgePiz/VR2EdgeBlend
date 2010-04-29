@@ -50,7 +50,6 @@ fix_XDesktopSize (CompScreen * screen, edgeblendScreen * ebs)
 
     screen->workArea.width = width;
     screen->workArea.height = height;
-
 }
 
 /**
