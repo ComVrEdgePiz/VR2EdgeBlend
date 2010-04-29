@@ -20,9 +20,15 @@ void buildOutput(edgeblendScreen * ebs)
             rposy = (row+1) * height;
             cposx = (col * width ) - (col * overlap);
             cposy = (irow * height) + (row * overlap);
-            if (rposx != cposx || rposy != cposy) {
+
+            compLogMessage (" ", CompLogLevelInfo,"%d/%d %d/%d", rposx, rposy, cposx, cposy);
+
+            if (rposx != 0 || rposy != height)
+            {
+
                 glRasterPos2i( rposx, rposy);
                 glCopyPixels( cposx, cposy, width, height, GL_COLOR);
+
             }
         }
     }
