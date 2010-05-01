@@ -1,0 +1,36 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{header}
+
+\begin{document}
+
+% \frontmatter
+\pagenumbering{Roman}
+\include{thesis_framing/titlepage}
+\include{thesis_framing/lists}
+%\include{thesis_framing/abbreviations}
+
+% \mainmatter
+\pagenumbering{arabic}
+\onehalfspacing
+% Chapters
+\input{chapter/0problemstellung}
+\input{chapter/1benutzerhandbuch}
+  \input{chapter/1benutzerhandbuch/0ablaufbedingungen}
+  \input{chapter/1benutzerhandbuch/1install_start}
+  \input{chapter/1benutzerhandbuch/2bedienungsanleitung}
+  \input{chapter/1benutzerhandbuch/3fehlermeldungen}
+  \input{chapter/1benutzerhandbuch/4wiederanlaufbedingungen}
+\input{chapter/2programmierhandbuch}
+  \input{chapter/2programmierhandbuch/0entwicklungskonfig}
+  \input{chapter/2programmierhandbuch/1problemanalyse_realisation}
+  \input{chapter/2programmierhandbuch/2grundlegende_datenstrukturen}
+  \input{chapter/2programmierhandbuch/3programmorganisation}
+  \input{chapter/2programmierhandbuch/4programmtest}
+
+%\appendix
+
+% \backmatter
+%\include{thesis_framing/bibliography}
+%\include{thesis_framing/affidavit}
+
+\end{document}
