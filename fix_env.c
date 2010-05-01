@@ -149,8 +149,47 @@ Bool fix_CursorPoll(CompScreen * screen, edgeblendScreen * ebs)
 
 
 
+
+
+
+Bool
+fix_CompWindowDocks(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
+{
+    CompWindow  *w;
+    int         dx, dy;
+
+    int         cellHeight, cellWidth, overlap;
+    int         cols, rows;
+    int         colsBefore, rowsBefore;
+    
+    cellHeight  = ebs->outputCfg->cell.height;
+    cellWidth   = ebs->outputCfg->cell.width;
+    cols        = ebs->outputCfg->grid.cols;
+    rows        = ebs->outputCfg->grid.rows;
+    overlap     = ebs->outputCfg->grid.blend;
+
+    for (w=screen->windows; w; w=w->next) {
+        if (w->type == CompWindowTypeDockMask) {
+            colsBefore = ceil(w->serverX / cellWidth);
+            rowsBefore = ceil((float)w->serverY / (float)cellHeight);
+            dx = overlap * ((colsBefore == 0) ? 0 : colsBefore-1) * (((mode == TRUE) ? -1 : 1));
+            dy = overlap * ((rowsBefore == 0) ? 0 : rowsBefore-1) * (((mode == TRUE) ? -1 : 1));
+
+            compLogMessage ("SCREEN", CompLogLevelInfo,"window: dx/dy=%d/%d   %d %d  %d", dx,dy, colsBefore, rowsBefore, w->serverY);
+            //@TODO RESIZE WIDTH AND HEIGHT + overlap IF BIGGER THAN AVALIBLE SPACE
+            //w->serverWidth -= 30;
+            //updateWindowSize(w);
+            moveWindow(w, dx, dy, TRUE, TRUE);
+            syncWindowPosition(w);
+        }
+    }
+    return TRUE;
+}
+
+
 void restore_CompScreenWorkArea(CompScreen * screen, edgeblendScreen * ebs);
 Bool save_CompScreenWorkArea(CompScreen * screen, edgeblendScreen * ebs);
+
 /**
  * Fixes the Workarea of compiz, by calling updateWorkareaForScreen(screen),
  * by changing the extends of the outputs, after backup

@@ -20,6 +20,7 @@ extern "C" {
     void fix_CompFullscreenOutput(CompPlugin * plugin, CompScreen * screen, edgeblendScreen * ebs, Bool mode);
     void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode);
     Bool fix_CursorPoll(CompScreen * screen, edgeblendScreen * ebs);
+    Bool fix_CompWindowDocks(CompScreen *screen, edgeblendScreen * ebs, Bool mode);
     Bool fix_CompScreenWorkarea(CompScreen *screen, edgeblendScreen * ebs, Bool mode);
     
 
