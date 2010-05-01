@@ -112,7 +112,7 @@ void fix_XCursor(CompScreen * screen, edgeblendScreen * ebs, Bool mode)
             ebs->cursorHidden = TRUE;
             XFixesHideCursor (screen->display->display, screen->root);
 //            compLogMessage ("edgeblend::fix_env->hidecursor", CompLogLevelInfo," true");
-        }      
+        }
     } else {
         /* can we? (since it's hidden we can ;) */
         if (ebs->cursorHidden) {
@@ -152,7 +152,7 @@ Bool fix_CursorPoll(CompScreen * screen, edgeblendScreen * ebs)
 void restore_CompScreenWorkArea(CompScreen * screen, edgeblendScreen * ebs);
 Bool save_CompScreenWorkArea(CompScreen * screen, edgeblendScreen * ebs);
 /**
- * Fixes the Workarea of compiz, by calling updateWorkareaForScreen(screen), 
+ * Fixes the Workarea of compiz, by calling updateWorkareaForScreen(screen),
  * by changing the extends of the outputs, after backup
  *
  * @PARAM CompScreen        *screen - Compiz Screen
@@ -164,6 +164,8 @@ fix_CompScreenWorkarea(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
 {
     int     i;
     int     row, col, height, width, overlap, cols, rows;
+    int     rowsPerScreen, colsPerScreen;
+
     div_t   tmp;
     if (mode == TRUE) {
         //needs a correct config
@@ -182,23 +184,39 @@ fix_CompScreenWorkarea(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
         overlap = ebs->outputCfg->grid.blend;
 
         for(i = 0; i < screen->nOutputDev; i++) {
+//cols
             tmp = div(screen->outputDev[i].region.extents.x1, width);
             col = tmp.quot;
+
+            tmp = div(screen->outputDev[i].region.extents.x2 - screen->outputDev[i].region.extents.x1, width);
+            colsPerScreen = tmp.quot;
+//rows
             tmp = div(screen->outputDev[i].region.extents.y1, height);
             row = tmp.quot;
 
-            if (col > 0) {
-                screen->outputDev[i].region.extents.x1 = col * width;
-                screen->outputDev[i].region.extents.x2 = (col+1) * width - col * overlap;
+            tmp = div(screen->outputDev[i].region.extents.y2 - screen->outputDev[i].region.extents.y1, height);
+            rowsPerScreen = tmp.quot;
+
+
+
+            if (col >0){
+                screen->outputDev[i].region.extents.x1 = col * width - (col+colsPerScreen-1) * overlap;
+                screen->outputDev[i].region.extents.x2 = (col+colsPerScreen) * width - (col+colsPerScreen-1) * overlap;
+            } else {
+                screen->outputDev[i].region.extents.x2 = (col+rowsPerScreen) * width - (col+colsPerScreen-1) * overlap;
             }
-            if (row > 0) {
+            if (row >0){
                 screen->outputDev[i].region.extents.y1 = row * height;
-                screen->outputDev[i].region.extents.y2 = (row+1) * height - row * overlap;
+                screen->outputDev[i].region.extents.y2 = (row+2) * height - (row+rowsPerScreen-1) * overlap;
+            } else {
+                screen->outputDev[i].region.extents.y2 = (row+rowsPerScreen) * height - (row+rowsPerScreen-1) * overlap;
             }
-        }
+
+        } 
         //disable for compiz viewport in 2D stay the same..
         //screen->width  = (width  * cols) - ((cols-1) * overlap);
         //screen->height = (height * rows) - ((rows-1) * overlap);
+        
     } else {
         restore_CompScreenWorkArea(screen, ebs);
     }

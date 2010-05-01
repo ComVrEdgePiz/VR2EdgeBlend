@@ -1,7 +1,7 @@
 <output>
     <grid>
-        <rows>2</rows>
-        <cols>4</cols>
+        <rows>4</rows>
+        <cols>2</cols>
         <blend>30</blend>
         <cell>
             <width>640</width>
@@ -18,18 +18,19 @@
         <screen>
             <left><c>30</c></left>
             <top><c>0</c></top>
+            <right><c>0</c></right>
+            <bottom><c>30</c></bottom>
+        </screen>
+
+        <screen>
+            <left><c>0</c></left>
+            <top><c>30</c></top>
             <right><c>30</c></right>
             <bottom><c>30</c></bottom>
         </screen>
         <screen>
             <left><c>30</c></left>
-            <top><c>0</c></top>
-            <right><c>30</c></right>
-            <bottom><c>30</c></bottom>
-        </screen>
-        <screen>
-            <left><c>30</c></left>
-            <top><c>0</c></top>
+            <top><c>30</c></top>
             <right><c>0</c></right>
             <bottom><c>30</c></bottom>
         </screen>
@@ -38,16 +39,17 @@
             <left><c>0</c></left>
             <top><c>30</c></top>
             <right><c>30</c></right>
-            <bottom><c>0</c></bottom>
+            <bottom><c>30</c></bottom>
         </screen>
         <screen>
             <left><c>30</c></left>
             <top><c>30</c></top>
-            <right><c>30</c></right>
-            <bottom><c>0</c></bottom>
+            <right><c>0</c></right>
+            <bottom><c>30</c></bottom>
         </screen>
+
         <screen>
-            <left><c>30</c></left>
+            <left><c>0</c></left>
             <top><c>30</c></top>
             <right><c>30</c></right>
             <bottom><c>0</c></bottom>

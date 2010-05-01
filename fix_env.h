@@ -9,7 +9,8 @@
 #define	_FIX_CURSOR_H
 
 #include "edgeblend.h"
-
+#include <assert.h>
+#include <compiz-core.h>
 #ifdef	__cplusplus
 extern "C" {
 #endif

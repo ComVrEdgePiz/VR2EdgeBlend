@@ -11,7 +11,7 @@ void buildOutput(edgeblendScreen * ebs)
     int rows    = ebs->outputCfg->grid.rows;
     int row     = rows;
     int rposx,rposy,cposx,cposy;
-   
+   //compLogMessage (" ", CompLogLevelInfo,"");
     while(row--) {
         col  = cols;
         irow = rows - (row+1);
@@ -21,17 +21,17 @@ void buildOutput(edgeblendScreen * ebs)
             cposx = (col * width ) - (col * overlap);
             cposy = (irow * height) + (row * overlap);
 
-            //compLogMessage (" ", CompLogLevelInfo,"%d/%d %d/%d", rposx, rposy, cposx, cposy);
+            
 
             if (rposx != 0 || rposy != height)
             {
-
+                //compLogMessage (" ", CompLogLevelInfo,"%d  %d/%d %d/%d", glGetError(), rposx, rposy, cposx, cposy);
                 glRasterPos2i( rposx, rposy);
                 glCopyPixels( cposx, cposy, width, height, GL_COLOR);
 
             }
         }
     }
-    //glLineWidth(4.0); glColor3f(.3, .3, .3); glBegin(GL_LINES); glVertex2i(0, rows*height); glVertex2i(cols * width, 0); glEnd();
+    glLineWidth(4.0); glColor3f(.3, .3, .3); glBegin(GL_LINES); glVertex2i(0, rows*height); glVertex2i(cols * width, 0); glEnd();
 
 }
