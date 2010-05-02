@@ -53,7 +53,7 @@ edgeblendPreparePaintScreen (CompScreen *screen, int ms)
  * @param int           numOutputs  - #outputs
  * @param unsigned int  mask        - draw-flags
  */
-/*
+
 static void
 edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
                       int numOutputs, unsigned int mask)
@@ -64,7 +64,7 @@ edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
 	(*screen->paintScreen) (screen, outputs, numOutputs, mask);
     WRAP (ebs, screen, paintScreen, edgeblendPaintScreen);
 }
-*/
+
 
 
 
@@ -78,14 +78,6 @@ edgeblendPaintWindow (CompWindow              *w,
     CompScreen *screen = w->screen;
     Bool status = TRUE;
     EDGEBLEND_SCREEN (screen);
-    /*
-    if (w->type == CompWindowTypeDockMask) {
-            if (w->serverY != 0 && (w->serverY + w->serverHeight) > 994) {
-                compLogMessage ("SCREEN", CompLogLevelInfo,"window: x/y=%d", w->serverY+w->serverHeight, 994);
-                moveWindow(w, 0, 994-(w->serverY + w->serverHeight), TRUE, TRUE);
-                syncWindowPosition(w);
-            }
-        }*/
 
     UNWRAP (ebs, screen, paintWindow);
         status = (*screen->paintWindow) (w, attrib, transform, region, mask);
@@ -199,7 +191,6 @@ edgeblendPaintOutput (CompScreen              *screen,
     CompTransform sTransform = *transform;
 
     Bool status = TRUE;
-
     
     /* ensure right textures */
     makeScreenCurrent (screen);
@@ -209,7 +200,7 @@ edgeblendPaintOutput (CompScreen              *screen,
         status = (*screen->paintOutput) (screen, sa, transform, region, output, mask);
     WRAP (ebs, screen, paintOutput, edgeblendPaintOutput);
     /* and here we go ;) */
-
+    
     /* transform to right viewport */
     transformToScreenSpace (screen, output, -DEFAULT_Z_CAMERA, &sTransform);
     glLoadMatrixf (sTransform.m);
@@ -249,10 +240,6 @@ edgeblendPaintOutput (CompScreen              *screen,
     glPopAttrib();
 
     
-    /* transform to right viewport */
-    //transformToScreenSpace (screen, output, -DEFAULT_Z_CAMERA, &sTransform);
-
-
     return status;
 }
 
@@ -412,20 +399,19 @@ edgeblendDebugOutput (CompDisplay *display)
 
     }
 
-/*
+
     XConfigureEvent xev;
     xev.event  = screen->root;
     xev.window = screen->root;
     xev.type   = ConfigureNotify;
-    xev.x        = -15;
+    xev.x        = 0;
     xev.y	 = 0;
-    xev.width	 = 2560 - 3*15;
-    xev.height	 = 1024 - 1*15;
+    xev.width	 = 2560 - 3*30;
+    xev.height	 = 1024 - 1*30;
     xev.border_width  = None;
     xev.above	      = None;
     xev.override_redirect = FALSE;
-    XSendEvent (screen->display->display, screen->root, FALSE, StructureNotifyMask, (XEvent *) &xev);
-    */
+    //XSendEvent (screen->display->display, screen->root, FALSE, StructureNotifyMask, (XEvent *) &xev);
 }
 
 /******************************************************************************/
@@ -494,6 +480,10 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
 
     ebs->orginalWorkarea.outputExtends = NULL;
 
+    /* ensure fullscreenoutput is used to render */
+    fix_CompFullscreenOutput(plugin, screen, ebs, TRUE);
+
+
     //switch ENV
     /* resize XDesktop */
     fix_XDesktopSize(screen, ebs);
@@ -505,9 +495,7 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     
     /* disable XCursor and enable mousepolling */
     fix_XCursor(screen, ebs, TRUE);
-    /* ensure fullscreenoutput is used to render */
-    fix_CompFullscreenOutput(plugin, screen, ebs, TRUE);
-
+  
     //build cursor-texture name
     glGenTextures (1, &ebs->cursorTexture);
 
@@ -519,7 +507,7 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     //edgeblendCreateTextures(screen);//ebs->outputConfig, screen);
 
     //wrap functions
-    //WRAP (ebs, screen, paintScreen,    edgeblendPaintScreen);
+    WRAP (ebs, screen, paintScreen,    edgeblendPaintScreen);
     //WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
     WRAP (ebs, screen, paintOutput,     edgeblendPaintOutput);      //we must hook into drawing...
     WRAP (ebs, screen, donePaintScreen, edgeblendDonePaintScreen);  //we must damage the screen every time
@@ -543,7 +531,7 @@ edgeblendFiniScreen (CompPlugin *plugin, CompScreen *screen)
     EDGEBLEND_SCREEN (screen);
 
     //Restore the original functions
-    //UNWRAP (ebs, s, paintScreen);
+    UNWRAP (ebs, screen, paintScreen);
     //UNWRAP (ebs, screen, preparePaintScreen);
     UNWRAP (ebs, screen, paintOutput);
     UNWRAP (ebs, screen, donePaintScreen);
@@ -552,15 +540,18 @@ edgeblendFiniScreen (CompPlugin *plugin, CompScreen *screen)
     
 
 
+
+    /* restore compiz fullscreen/outputdevice-based rendering */
+    fix_CompFullscreenOutput(plugin, screen, ebs, FALSE);
     /* restore woarkarea */
     fix_CompScreenWorkarea(screen, ebs, FALSE);
     fix_CompWindowDocks(screen, ebs, FALSE);
     /* restore height and width of the X-Desktop */
-    //fix_XDesktopSize(screen, ebs);
+    fix_XDesktopSize(screen, ebs);
     /* restore XCursor handling and remove mosue polling */
     fix_XCursor(screen, ebs, FALSE);
-    /* restore compiz fullscreen/outputdevice-based rendering */
-    fix_CompFullscreenOutput(plugin, screen, ebs, FALSE);
+    
+    
     
 
     //clear edgeblend

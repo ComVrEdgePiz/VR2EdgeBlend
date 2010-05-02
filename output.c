@@ -32,6 +32,7 @@ void buildOutput(edgeblendScreen * ebs)
             }
         }
     }
-    glLineWidth(4.0); glColor3f(.3, .3, .3); glBegin(GL_LINES); glVertex2i(0, rows*height); glVertex2i(cols * width, 0); glEnd();
+    //glLineWidth(4.0); glColor3f(.3, .3, .3); glBegin(GL_LINES); glVertex2i(0, rows*height); glVertex2i(cols * width, 0); glEnd();
+    //glLineWidth(4.0); glColor3f(.9, .3, .9); glBegin(GL_LINES); glVertex2i(0, 0); glVertex2i(cols * width, rows*height); glEnd();
 
 }

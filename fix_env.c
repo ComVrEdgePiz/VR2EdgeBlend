@@ -176,9 +176,7 @@ fix_CompWindowDocks(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
             dy = overlap * ((rowsBefore == 0) ? 0 : rowsBefore-1) * (((mode == TRUE) ? -1 : 1));
 
             compLogMessage ("SCREEN", CompLogLevelInfo,"window: dx/dy=%d/%d   %d %d  %d", dx,dy, colsBefore, rowsBefore, w->serverY);
-            //@TODO RESIZE WIDTH AND HEIGHT + overlap IF BIGGER THAN AVALIBLE SPACE
-            //w->serverWidth -= 30;
-            //updateWindowSize(w);
+            //@TODO RESIZE WIDTH AND HEIGHT + overlap IF BIGGER THAN AVALIBLE SPACE     //w->serverWidth -= 30;  //updateWindowSize(w);
             moveWindow(w, dx, dy, TRUE, TRUE);
             syncWindowPosition(w);
         }
@@ -239,10 +237,10 @@ fix_CompScreenWorkarea(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
 
 
             if (col >0){
-                screen->outputDev[i].region.extents.x1 = col * width - (col+colsPerScreen-1) * overlap;
+                screen->outputDev[i].region.extents.x1 = col * width;// - (col+colsPerScreen-1) * overlap;
                 screen->outputDev[i].region.extents.x2 = (col+colsPerScreen) * width - (col+colsPerScreen-1) * overlap;
             } else {
-                screen->outputDev[i].region.extents.x2 = (col+rowsPerScreen) * width - (col+colsPerScreen-1) * overlap;
+                //screen->outputDev[i].region.extents.x2 = (col+rowsPerScreen) * width - (col+colsPerScreen-1) * overlap;
             }
             if (row >0){
                 screen->outputDev[i].region.extents.y1 = row * height;
