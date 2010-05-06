@@ -2,5 +2,12 @@
 \section{Beschreibung grundlegender Datenstrukturen}
 \label{sec:programmierhandbuch:datenstrukturen}
 
-Hier werden die Datenorganisation und die Datenstrukturen zur Problemlösung beschrieben. Dazu zählt der Aufbau, die Größe der einzelnen Komponenten und speziell bei dynamischen Strukturen die Verzeigerung untereinander. In diesem Zusammenhang ist auch der Aufbau der vom Programm benutzten Datendateien zu beschreiben.
+%Hier werden die Datenorganisation und die Datenstrukturen zur Problemlösung beschrieben. Dazu zählt der Aufbau, die Größe der einzelnen Komponenten und speziell bei dynamischen Strukturen die Verzeigerung untereinander. In diesem Zusammenhang ist auch der Aufbau der vom Programm benutzten Datendateien zu beschreiben.
+\subsection{Konfigurationsdatei und deren interne Repräsentation}
 
+Für die Beschreibung der XML-Dateistruktur siehe Sektion \ref{sec:benutzerhandbuch:anleitung}. Intern wird ebendiese Struktur übernommen.
+
+\mylisting[label=lst:output, caption={Interne Darstellung der Konfiguration}]{listings/output.h}
+
+\subsection{Formatierung der Bilddateien}
+Die Bilddateien, die optional in der Konfigurationsdatei angegeben werden können sind "`TGA"' Dateien (Truevision Graphics Adapter). Auch bezeichnet als "`TARGA"'. Die Bilddateien müssen um korrekt gelesen zu werden unkomprimierte Daten ohne Farbtabelle enthalten. Dabei werden vier Byte pro Pixel abgelegt, je ein Byte für rot, grün, blau und alpha Darstellung. Wesentlich ist aktuell nur der Alpha-Wert, der beschreibt wie stark der jeweilige Ausgabebereich abgedunkelt wird.

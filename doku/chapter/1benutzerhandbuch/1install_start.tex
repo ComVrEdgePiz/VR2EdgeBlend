@@ -2,4 +2,27 @@
 \section{Programminstallation und Programmstart}
 \label{sec:benutzerhandbuch:install_start}
 
-Welche Kommandos / Aktionen sind erforderlich, um das Programm zu installieren und zu starten? Welche Fehler können dabei auftreten, und wie werden diese behoben? Sollte eine umfangreiche Installation erforderlich sein, so ist ein Installer mitzuliefern.
+%Welche Kommandos / Aktionen sind erforderlich, um das Programm zu installieren und zu starten? Welche Fehler können dabei auftreten, und wie werden diese behoben? Sollte eine umfangreiche Installation erforderlich sein, so ist ein Installer mitzuliefern.
+In diesem Abschnitt wird beschrieben, wie und welche Software zu installieren ist, wie das Plug-In installiert werden kann und wie es zu starten ist. Die Fehler, die während der Installation auftreten können werden in Sektion \ref{sec:benutzerhandbuch:fehler} beschrieben.
+
+\subsection{Compiz installieren}
+Compiz, den zugehörigen Konfigurationsmanager und die benötigten Entwicklungsbibliotheken können mit dem Kommando
+
+\texttt{> sudo aptitude install simple-ccsm compiz-dev compiz-fusion-bcop xlibmesa-gl-dev libglu1-mesa-dev libglut3-dev}
+
+installiert werden.
+
+\subsection{Edgeblend Plug-In installieren}
+Da das Plug-In nur in Quellcodeform zur Verfügung gestellt wird und davon ausgegangen wird, dass die Benutzer Anwendungen entwickeln existert ein Makefile mit hilfe dessen das Plug-In erstellt, installiert und deinstalliert werden kann.
+
+Die folgenden Kommandos existieren:
+\begin{description}
+  \item [> make build] kompiliert und erstellt das Plug-In
+  \item [> make install] installiert das Plug-In, kopiert und registriert es zu Compiz. Für die Konfiguration des Plug-In siehe \ref{sec:benutzerhandbuch:anleitung}
+  \item [> make uninstall] deinstalliert das Plug-In
+\end{description}
+
+\subsection{Edgeblend Plug-In starten}
+Zum starten des Edgeblend Plug-In wird der \emph{CompizConfig Einstellungs-Manager} aufgerufen. In der Einstellungsübersicht sollte nach erfolgreicher installation nun in der Kategorie "`Allgemein"' der Name "`Edgeblend"' auftauchen. Mit dem aktivieren des Kastens neben dem Plug-In Namen wird selbiges gestartet. 
+
+Vorher sollte sichergestellt werden, dass der Pfad zur Konfigurationsdatei richtig gesetzt ist. Um diesen zu überprüfen wird der Name in der Einstellungsübersicht angeklickt. Unter dem Reiter "`Main"' erscheint nun ein Einstellungspunkt "`Config File"' mit einem Pfad als Wert. Dieser muss auf die XML-Formatierte Konfigurationsdatei verweisen.

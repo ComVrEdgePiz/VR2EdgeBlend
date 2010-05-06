@@ -2,4 +2,41 @@
 \section{Bedienungsanleitung}
 \label{sec:benutzerhandbuch:anleitung}
 
-An diese Stelle gehört eine Beschreibung der angebotenen Funktionen und wie sie aktiviert werden, also wie der Benutzer vorgehen muß, um seine Probleme zu lösen bzw. mit dem Programm zu arbeiten. Zur Verdeutlichung und Orientierung ist es auch sinnvoll, an dieser Stelle Screenshots der Benutzeroberfläche einzufügen. Die Ein- und Ausgabedaten (Inhalte und Formate) sind zu beschreiben.
+%An diese Stelle gehört eine Beschreibung der angebotenen Funktionen und wie sie aktiviert werden, also wie der Benutzer vorgehen muß, um seine Probleme zu lösen bzw. mit dem Programm zu arbeiten. Zur Verdeutlichung und Orientierung ist es auch sinnvoll, an dieser Stelle Screenshots der Benutzeroberfläche einzufügen. Die Ein- und Ausgabedaten (Inhalte und Formate) sind zu beschreiben.
+
+Da nach dem erfolgreichen Start des Plug-In nichts mehr einstellbar ist, werden hier die Konfigurationsmöglichkeiten, die über die XML-Formatierte Datei zur Verfügung stehen, beschrieben.
+
+Das Edgeblend Plug-In kann XML-Tags verarbeiten die in der folgenden Struktur auftreten müssen:
+\begin{inlinexml}
+output
+- grid
+- - rows, cols
+- - cell
+- - - height, width
+- screens
+- - screen
+- - - top, left, right, bottom
+- - - - a, b, c
+- - image
+\end{inlinexml}
+
+Alle Attribute der Tags werden ignoriert, es werden nur die Tags und der Inhalt dieser ausgewertet.
+
+\begin{description}
+  \item [output] der Root-Tag für valides XML
+  \item [grid] allgemeine Einstellungen, die für die gesamte Sichtfläche gelten
+  \item [rows] Anzahl der vertikal angeordneten grafischen Ausgabegeräte
+  \item [cols] Anzahl der horizontal angeordneten grafischen Ausgabegeräte
+  \item [cell] Auflösung eines Ausgabegerätes (muss für jedes gleich sein)
+  \item [height] vertikale Auflösung eine Ausgabegerätes
+  \item [width] horizontale Auflösung eines Ausgabegerätes
+  \item [screens] Einstellungen für die Ausgabegeräte
+  \item [screen] Blending-Einstellungen für einen Ausgabegerät (die Anzahl der \texttt{screen}-Tags muss mit der Anzahl der \texttt{rows} $*$ \texttt{cols} übereinstimmen)
+  \item [top, left, right, bottom] Blending-Einstellung für eine Seite eines \texttt{screen}
+  \item [a, b, c] Parameter für die Blending-Funktion einer Seite eines Ausgabegerätes.
+  \item [image] Pfad zu einer Bilddatei, die die Auflösung aller Ausgabegeräte zusammen enthält (Alternative zu den \texttt{screen}-Tags)
+\end{description}
+
+\mylisting[label=lst:config, caption={Eine Beispielkonfiguration}]{listings/config.xml}
+
+Diese Konfigurationsdatei Verwendet vier im quadrat angeordneten Ausgabegeräte mit je einer Auflösung von 1024x768. Die Einzelkonfiguration der Ausgabegeräte wird von oben links zeilenweise nach unten rechts gelesen. Wenn die Datei unter dem \texttt{image} Pfad existiert wird diese geladen, ansonsten werden die Einzelkonfigurationen verwendet. Hier wird zwischen dem Gerät oben links zu dem oben rechts beginnend ab 20 Pixel vom Rand entfernt übergeblendet. Von oben nach unten wird links, sowie rechts mit 30 Pixel übergeblendet und unten zwischen dem linken und rechten Ausgabegerät je mit 40 Pixel, so dass sich eine Sichtfläche von 2028 Pixel breite im oberen Bereich und 2008 Pixel breite im unteren Bereich bildet. Die Höhe beträgt dabei 1506 Pixel über die gesamte Breite.
