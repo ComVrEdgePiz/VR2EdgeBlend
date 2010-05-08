@@ -1,33 +1,80 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Problemanalyse und Realisation}
 \label{sec:programmierhandbuch:analyse_realisation}
-%Es soll dargestellt werden, mit welcher Konzeption bzw. nach welchem Algorithmus das Programm umgesetzt worden ist. Es ist zu erklären, warum etwas so und nicht anders gelöst wurde. Dieser Abschnitt ist völlig unabhängig von der verwendeten Programmiersprache zu halten. Hier finden sich Eure Überlegungen, die Ihr vor dem Schreiben der 1. Codezeile gemacht habt, also z.B. ob Datenstruktur1 oder Datenstruktur2 besser zum gegebenen Problem paßt und warum dies so ist, welche Algorithmen zur Problemlösung möglich sind und welcher davon warum umgesetzt wurde usw.
-
-In diesem Abschnitt werden die drei wesentlichen Bestandteile des Plug-In beschrieben. So werden Struktur des Plug-In, ansprechen der Ausgabegeräte und generieren der Blending-Maske analysiert, sowie die implementierung erklärt.
-
-\subsection{Struktur des Compiz Plug-In}
-\todo{}
-\subsubsection{Analyse}
-
-\subsubsection{Realisation}
-
-
+In diesem Abschnitt werden die wesentlichen Bestandteile des Plug-In beschrieben. Es wird das Ansprechen der Ausgabegeräte und die Generieren der Blending-Maske analysiert, sowie deren Implementierung erklärt.
 
 \subsection{Ansprechen der Ausgabegeräte}
 Hinter diesem Punkt verbirgt sich die Beschreibung der verwendeten Methoden um die Bilddaten zu manipulieren und eine ansonsten normale Funktionalität des Betriebssystems zu gewährleisten.
-
 \subsubsection{Analyse}
-\todo{}
+Die Konfiguration welcher Bereich von welchem Ausgabegerät dargestellt wird, erfolgt über den X-Server, ebenso wie die Auswertung des User-Inputs, das Zeichnen des Mousezeigers, die Verwaltung der Programmfenster und des Arbeitsbereiches.
+
+Compiz übernimmt das Compositing der Ausgabe und ermöglicht somit die Manipulationen der Darstellung. Es werden zwei Arten der Manipulation bereitgestellt:
+\begin{enumerate}
+\item Normal - Jedes vom X-Server verwaltetes Ausgabegerät wird einzeln abgearbeitet
+\item Fullscreen - Alle Ausgabegeräte werden gleichzeitig verarbeitet
+\end{enumerate}
+
+Um die benötigten Überlappungen für das Edgblending zu erhalten, muss die Auflösung des Desktops reduziert werden. Hierzu kommen folgende Möglichkeiten in Frage:
+
+\begin{enumerate}
+\item Der X-Server bietet eine Möglichkeit an, die vorhandenen Ausgabegeräte mit Überlappungsbereich zu konfigurieren.
+\item Mittels des Events X-Server-Events {\it StructureNotifyMask} kann die aktuelle Sturktur des Bildschirm zur Laufzeit geändert werden. 
+\item Es wird die orginal Konfiguration der Ausgabegeräte beibehalten, aber der interaktiv nutzbare Bereich des Desktops - die Workarea - künstlich um die summierte Größe der benötigten Überlappungsbereiche eingeschränkt. Nun können die einzelnen Breiche des Workspace passend auf die Ausgabegeräte ausgegeben werden.
+\end{enumerate}
+Eine Realisierung des Edgeblending mittels der ersten aufgezeigten Möglichkeit, ist durch die Verwaltung der Überlappungsbereiche durch den X-Server bedingt, nicht möglich. Ausgabe die in den Schnittbereich zweier horizontal angeordnete Ausganegeräte gezeichnet werden, werden gleich auf beiden ausgegeben. Es ist damit nicht möglich unterschiedliche Verläufe auf die Geräte zu zeichnen. 
+
+Eine Umsetzung mittels der zweiten aufgezeigten Methode ist ebenfalls nicht möglich, da die Verringerung der Desktopauflösung gleichzeitig mit der Verringerrung des Viewports einhergeht. Dies führt zu deaktivierten Bereichen im Viewport, die Veränderungen des Framebufferinhalt nicht mehr aktualisert werden.
+
+Eine Realisation ist damit nur mittels der dritten aufgezeigten Möglichkeit zu erreichen.
+
 \subsubsection{Realisation}
+\begin{description}
+\item[Workspace-Anpassungen:] Es wird die Größe des Workarea reduziert und Compiz zur Fullscreen-Ausgabe gezwungen, dies erfordert Änderungen im X-Server, als auch an der internen Struktur von Compiz. Diese erfolgen beim Starten des Plugins und werden beim Beenden des Plugins wieder rückgängig gemacht. 
+\begin{description}
+
+\item[X-Server:] 
+\begin{itemize}
+\item Die Konfiguration der aktuellen Worksarea ({\it \_NET\_WORKAREA}), die Desktop-Geometrie ({\it \_NET\_DESKTOP\_GEOMETRY}) sowie der Desktop-Viewport ({\it \_NET\_DESKTOP\_VIEWPORT}) werden in der Höhe und der Breit jeweils um die Ausmaße der Überlappungebereiche reduziert.
+\item Das Zeichnen des Mosue-Cursors wird deaktiviert, da dieser erst nach den manipulationen von Compiz gezeichnet werden würde.
+\end{itemize}
+
+\item[Compitz:] 
+\begin{itemize}
+\item Durch das Setzen der Member {\it wasForcedIndependetOutput} und {\it hasOverlappingOutputs} des {\it CompScreen}-Record wird Compiz gezwungen die Fullscreenfunktion für die Ausgabemanipulation zu verwenden.
+\item Die ebenfalls im {\it CompScreen}-Record verwalteten Ausgabegerätegrößen ({\it outputDev}) werden an die neue Workarea angepasst.
+\item Die Dock-Bars (z.B. der Taskbar) von Gnome wird an den unteren Rand der neuen Workarea verschoben.
+\end{itemize}
+
+\end{description}
+
+\item[Ausgabemaipulationen:] Hierfür werden drei Schritte benötigt
+\begin{enumerate}
+
+\item Die aktuelle Cursortextur wird aus dem X-Server ausgelesen und durch das Plugin an die momentane Cursorposition gezeichnet.
+
+\item Die Verteilung des Workarea-Inahltes auf die Ausgabegeräte erfolgt mittels kopieren des Framebufferinhaltes. Hierbei wird beim unteren rechten Ausgabegerät begonnen und der ensprechende Ausschitt der Workarea auf den Ausschnitt des zugehörigen Ausgabegerätes kopiert. Die restliche Bereiche werden von rechts nach links und von unten nach oben abgearbeitet.
+
+\item Die erzeuge Blending-Textur wird über den gesamten Viewport gelegt.
+
+\end{enumerate}
+
+\end{description}
+
+Die Abbildung 3.1 veranschautlicht die hier besprochenen Schritte.
 
 
+
+
+
+\begin{figure}
+\centering % zum zentrieren, kannst Du auch weglassen
+\includegraphics[width=\linewidth]{gfx/outputerzeugung.pdf}
+\caption{Erzeugung des Egeblendings}
+\label{fig:gridoutput}
+\end{figure}
+\newpage
 
 \subsection{Generieren der Blending-Maske}
 Nachdem im vorherigen Abschnitt beschrieben wurde, wie die erzeugte Maske mit der eigentlichen Benutzeroberfläche zusammengefügt wird, beschreibt dieser Abschnitt wie die Maske erstellt wird.
-
 \subsubsection{Analyse}
-
-
 \subsubsection{Realisation}
-
-%(- parsen der konfiguration)
