@@ -19,9 +19,10 @@ Um die benötigten Überlappungen für das Edgblending zu erhalten, muss die Auflös
 \begin{enumerate}
 \item Der X-Server bietet eine Möglichkeit an, die vorhandenen Ausgabegeräte mit Überlappungsbereich zu konfigurieren.
 \item Mittels des Events X-Server-Events {\it StructureNotifyMask} kann die aktuelle Sturktur des Bildschirm zur Laufzeit geändert werden. 
-\item Es wird die orginal Konfiguration der Ausgabegeräte beibehalten, aber der interaktiv nutzbare Bereich des Desktops - die Workarea - künstlich um die summierte Größe der benötigten Überlappungsbereiche eingeschränkt. Nun können die einzelnen Breiche des Workspace passend auf die Ausgabegeräte ausgegeben werden.
+\item Es wird die orginal Konfiguration der Ausgabegeräte beibehalten, nur der interaktiv nutzbare Bereich des Desktops - die Workarea - wird künstlich um die summierte Größe der benötigten Überlappungsbereiche eingeschränkt. Nun können die einzelnen Breiche des Workspace passend auf die Ausgabegeräte ausgegeben werden.
 \end{enumerate}
-Eine Realisierung des Edgeblending mittels der ersten aufgezeigten Möglichkeit, ist durch die Verwaltung der Überlappungsbereiche durch den X-Server bedingt, nicht möglich. Ausgabe die in den Schnittbereich zweier horizontal angeordnete Ausganegeräte gezeichnet werden, werden gleich auf beiden ausgegeben. Es ist damit nicht möglich unterschiedliche Verläufe auf die Geräte zu zeichnen. 
+
+Eine Realisierung des Edgeblending mittels der ersten aufgezeigten Möglichkeit, ist durch die Verwaltung der Überlappungsbereiche durch den X-Server bedingt, nicht möglich. Ausgabe die in den Schnittbereich zweier horizontal angeordnete Ausganegeräte gezeichnet werden, werden auf beiden ausgegeben. Es ist damit nicht möglich unterschiedliche Verläufe auf die Geräte zu zeichnen. 
 
 Eine Umsetzung mittels der zweiten aufgezeigten Methode ist ebenfalls nicht möglich, da die Verringerung der Desktopauflösung gleichzeitig mit der Verringerrung des Viewports einhergeht. Dies führt zu deaktivierten Bereichen im Viewport, die Veränderungen des Framebufferinhalt nicht mehr aktualisert werden.
 
@@ -35,14 +36,14 @@ Eine Realisation ist damit nur mittels der dritten aufgezeigten Möglichkeit zu e
 \item[X-Server:] 
 \begin{itemize}
 \item Die Konfiguration der aktuellen Worksarea ({\it \_NET\_WORKAREA}), die Desktop-Geometrie ({\it \_NET\_DESKTOP\_GEOMETRY}) sowie der Desktop-Viewport ({\it \_NET\_DESKTOP\_VIEWPORT}) werden in der Höhe und der Breit jeweils um die Ausmaße der Überlappungebereiche reduziert.
-\item Das Zeichnen des Mosue-Cursors wird deaktiviert, da dieser erst nach den manipulationen von Compiz gezeichnet werden würde.
+\item Das Zeichnen des Mosue-Cursors wird deaktiviert, da dieser erst nach den Manipulationen von Compiz gezeichnet werden würde.
 \end{itemize}
 
 \item[Compitz:] 
 \begin{itemize}
 \item Durch das Setzen der Member {\it wasForcedIndependetOutput} und {\it hasOverlappingOutputs} des {\it CompScreen}-Record wird Compiz gezwungen die Fullscreenfunktion für die Ausgabemanipulation zu verwenden.
 \item Die ebenfalls im {\it CompScreen}-Record verwalteten Ausgabegerätegrößen ({\it outputDev}) werden an die neue Workarea angepasst.
-\item Die Dock-Bars (z.B. der Taskbar) von Gnome wird an den unteren Rand der neuen Workarea verschoben.
+\item Die Dock-Bars (z.B. der Taskbar) von Gnome wird an den unteren/rechten Rand der neuen Workarea verschoben.
 \end{itemize}
 
 \end{description}
@@ -52,7 +53,7 @@ Eine Realisation ist damit nur mittels der dritten aufgezeigten Möglichkeit zu e
 
 \item Die aktuelle Cursortextur wird aus dem X-Server ausgelesen und durch das Plugin an die momentane Cursorposition gezeichnet.
 
-\item Die Verteilung des Workarea-Inahltes auf die Ausgabegeräte erfolgt mittels kopieren des Framebufferinhaltes. Hierbei wird beim unteren rechten Ausgabegerät begonnen und der ensprechende Ausschitt der Workarea auf den Ausschnitt des zugehörigen Ausgabegerätes kopiert. Die restliche Bereiche werden von rechts nach links und von unten nach oben abgearbeitet.
+\item Die Verteilung des Workarea-Inhaltes auf die Ausgabegeräte erfolgt mittels kopieren des Framebufferinhaltes. Hierbei wird beim unteren rechten Ausgabegerät begonnen und der ensprechende Ausschitt der Workarea auf den Ausschnitt des zugehörigen Ausgabegerätes kopiert. Die restliche Bereiche werden von rechts nach links und von unten nach oben abgearbeitet.
 
 \item Die erzeuge Blending-Textur wird über den gesamten Viewport gelegt.
 
@@ -60,9 +61,7 @@ Eine Realisation ist damit nur mittels der dritten aufgezeigten Möglichkeit zu e
 
 \end{description}
 
-Die Abbildung 3.1 veranschautlicht die hier besprochenen Schritte.
-
-
+Die Abbildung 3.1 veranschaulicht die hier besprochenen Schritte.
 
 
 

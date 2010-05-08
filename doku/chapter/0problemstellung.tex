@@ -7,17 +7,18 @@ Dieses Kapitel beschreibt den Hintergrund dieser Proektarbeit, umreißt kurz die 
 
 % allgemeine problemstellung
 \section{Hintergrund}
-Verstärkte Immersion wird in der Virtual Reality (VR) oft durch größere oder mehrere Projektionsflächen erzeugt, so dass der Betrachter den Bezug zu der realen Umgebung verliert. Diese Flächen benötigen leider meist mehrere Beamer um sie in einer akzeptablen Auflösung zu bestrahlen. Es ist nahezu unmöglich die Beamer so im Verhältnis zur Fläche zu positionieren, dass die beleuchteten Stellen auf der Projektionsfläche sich nicht überschneiden.
+Verstärkte Immersion wird in der Virtual Reality (VR) oft durch größere oder mehrere Projektionsflächen erzeugt, so dass der Betrachter den Bezug zu der realen Umgebung verliert. Diese Flächen benötigenmeist mehrere Beamer um sie in einer akzeptablen Auflösung zu bestrahlen. Es ist nahezu unmöglich die Beamer so im Verhältnis zur Fläche zu positionieren, dass die beleuchteten Stellen auf der Projektionsfläche sich nicht überschneiden.
 
-Aus dieser Überschneidung ergeben sich zwei Hauptsächliche Probleme. Zum Einen wird der Bereich der Überschneidung mit doppelter Intensität beleuchtet, dies ist extrem auffällig. Zum Anderen kennt die Rendering-Pipeline die Größe der Überlappung nicht, wodurch z.B. Teile eines Objektes übereinander liegen, die nebeneinander liegen sollten. Sehr Auffällig ist dies bei interaktiven Anwendungen, wenn die virtuelle Hand (in Form eines Cursors oder Ähnlichem) betroffen ist.
+Aus dieser Überschneidung ergeben sich zwei Hauptsächliche Probleme. Zum Einen wird der Bereich der Überschneidung mit doppelter Intensität beleuchtet, dies ist extrem auffällig. Zum Anderen kennt die Rendering-Pipeline die Größe der Überlappung nicht, wodurch z.B. Teile eines Objektes übereinander liegen, die nebeneinander liegen sollten. Sehr auffällig ist dies bei interaktiven Anwendungen, wenn die virtuelle Hand (in Form eines Cursors oder Ähnlichem) betroffen ist.
 
 Auf den in der FH-Wedel vorhandenen Cave trifft dieses Problem nicht zu, da hier nur ein Beamer zur Zeit je eine Projektionsfläche bestrahlt. Allerdings bei Anwendungen wie der CoBench, die sehr stark auf Interaktivität setzt und zwei Beamer für eine Fläche benötigt treten die Probleme auf. In verstärkter Form treten die Probleme bei sphärischen Projektionen mit mehreren Beamern auf, da hier die Überlappungen selbst mit komplexen Linsensystemen nur unter größtem Aufwand gering gehalten werden können.
 
 \section{Projektidee}
 Im Rahmen dieses Projektes soll daher ein Plug-In entstehen, welches Überschneidungen aus einem Bild herausrechnet und die Helligkeit der Überlappungsbereiche so anpasst, dass diese nicht mehr Wahrnehmbar sind. Das Plug-In soll einfach und nach Möglichkeiten auch interaktiv konfigurierbar sein. Im ersten Schritt sollen theoretisch beliebig viele an ihren Vertikalen verknüpfte Bildschirme übergeblendet werden können.
+\todo{Vektor nicht GRID/Array?}
 
 \section{Anforderungen}
-Die folgenden zwei Abschnitte grenzen legen fest was zu diesem Projekt gehört und wo die Abgrenzungen liegen.
+Die folgenden zwei Abschnitte legen fest was zu diesem Projekt gehört und wo die Abgrenzungen liegen.
 
 \subsection{Pflichtkriterien}
 Die folgenden Anforderungen müssen umgesetzt werden.
@@ -36,7 +37,7 @@ Des Weiteren soll überprüft werden in wie weit es möglich ist das Plug-In in wel
 Die im Folgenden genannten Anforderungen sollen explizit nicht umgesetzt werden.
 
 Die Funktionalität des Plug-In beschränkt sich auf ein Gerät. Das heißt, dass das Plug-In nicht mehrere Ressourcen verwaltet oder über das Netzwerk kommuniziert sondern ausschließlich im Speicher eines Rechners arbeitet. Es wird nicht dafür ausgelegt sein die Berechnung auf mehrere Computer zu verteilen.
-
+\todo{Vektor nicht GRID/Array?}
 Das Plug-In wird ausschließlich an den Vertikalen verknüpfte "Screens" bearbeiten, also zwischen diesen die Helligkeit überblenden und Pixelinterferenzen herausarbeiten. Die Bilder der einzelnen Beamer können nicht zusätzlich übereinander also an den horizontalen verknüpft werden. Daraus ergibt sich, dass das Plug-In die Anordnung der Beamer als Array nicht unterstützt sondern lediglich Anordnungen als Vektor.
 
 Die Implementierung des Plug-Ins für das Betriebssystem Windows ist ebenfalls nicht Bestandteil dieses Projektes. Lediglich die Nachforschungen ob und wie es möglich ist.
