@@ -16,7 +16,10 @@
  */
 #include "output.h"
 #include <assert.h>
-
+/**
+ * Copies the rects from the workarea onto the rects of the outputdevs
+ * @PARAM edgeblendScreen   *ebs     - private edgeblend plugin screen data
+ */
 void buildOutput(edgeblendScreen * ebs)
 {
     int irow,col;
@@ -27,7 +30,7 @@ void buildOutput(edgeblendScreen * ebs)
     int rows    = ebs->outputCfg->grid.rows;
     int row     = rows;
     int rposx,rposy,cposx,cposy;
-   //compLogMessage (" ", CompLogLevelInfo,"");
+   
     while(row--) {
         col  = cols;
         irow = rows - (row+1);
@@ -35,13 +38,11 @@ void buildOutput(edgeblendScreen * ebs)
             rposx = col * width;
             rposy = (row+1) * height;
             cposx = (col * width ) - (col * overlap);
-            cposy = (irow * height) + (row * overlap);
-
-            
+            cposy = (irow * height) + (row * overlap);          
 
             if (rposx != 0 || rposy != height)
             {
-                //compLogMessage (" ", CompLogLevelInfo,"%d  %d/%d %d/%d", glGetError(), rposx, rposy, cposx, cposy);
+   
                 glRasterPos2i( rposx, rposy);
                 glCopyPixels( cposx, cposy, width, height, GL_COLOR);
 

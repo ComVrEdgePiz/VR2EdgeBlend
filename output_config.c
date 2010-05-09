@@ -49,7 +49,8 @@ allocate_screenspath(int i)
 
 static void
 initialize_screens(EdgeblendOutputScreen* s, int m) {
-  int i; 
+  int i;
+
   for(i=0;i<m;i++) {
     s[i].left.a = s[i].left.b = s[i].left.c = 0.0;
     s[i].top.a = s[i].top.b = s[i].top.c = 0.0;

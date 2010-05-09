@@ -19,7 +19,9 @@
 #include "fix_env.h"
 #include "blending.h"
 #include "output.h"
-
+/*
+ * @var display plugin-data index
+ */
 static int displayPrivateIndex = 0;
 
 /**
@@ -49,7 +51,7 @@ edgeblendPreparePaintScreen (CompScreen *screen, int ms)
  * @param int           numOutputs  - #outputs
  * @param unsigned int  mask        - draw-flags
  */
-
+/*
 static void
 edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
                       int numOutputs, unsigned int mask)
@@ -60,10 +62,6 @@ edgeblendPaintScreen (CompScreen *screen, CompOutput *outputs,
 	(*screen->paintScreen) (screen, outputs, numOutputs, mask);
     WRAP (ebs, screen, paintScreen, edgeblendPaintScreen);
 }
-
-
-
-
 static Bool
 edgeblendPaintWindow (CompWindow              *w,
                    const WindowPaintAttrib *attrib,
@@ -81,9 +79,12 @@ edgeblendPaintWindow (CompWindow              *w,
 
     return status;
 }
+*/
 /**
  * Getting Xorg-Cursor image and store it in gfx-ram:
  * Taken from the zoom-plugin
+ * @PARAM edgeblendScreen   *ebs     - private edgeblend plugin screen data
+ * @PARAM CompDisplay       *display - Compiz Display
  */
 static void
 updateMouseCursor(edgeblendScreen *ebs, Display *display)
@@ -132,13 +133,12 @@ updateMouseCursor(edgeblendScreen *ebs, Display *display)
 }
 
 /**
- * Draws a rect....
- * @SEE ezoom
- *
+ * Draws a rect for mouse cursor
+ * @SEE ezoom-plugin
  * @TODO better done with ./src/paint.c:415:	(*screen->paintCursor) (c, transform, tmpRegion, 0);
  *
- * @param int x - x-Pos
- * @param int y - y-Pos
+ * @PARAM edgeblendScreen   *ebs     - private edgeblend plugin screen data
+ * @PARAM CompDisplay       *display - Compiz Display
  */
 static void
 drawMouseCursor(edgeblendScreen *ebs, Display *display)
@@ -224,10 +224,8 @@ edgeblendPaintOutput (CompScreen              *screen,
                  */
                 buildOutput(ebs);
                 /* 3. assign blending texture
-                 *
                  */
                 blend(ebs);
-
 
                 /* restore opengl state */
                 glDisable(GL_BLEND);
@@ -503,11 +501,11 @@ edgeblendInitScreen (CompPlugin *plugin, CompScreen *screen)
     //edgeblendCreateTextures(screen);//ebs->outputConfig, screen);
 
     //wrap functions
-    WRAP (ebs, screen, paintScreen,    edgeblendPaintScreen);
+    //WRAP (ebs, screen, paintScreen,    edgeblendPaintScreen);
     //WRAP (ebs, screen, preparePaintScreen, edgeblendPreparePaintScreen);
     WRAP (ebs, screen, paintOutput,     edgeblendPaintOutput);      //we must hook into drawing...
     WRAP (ebs, screen, donePaintScreen, edgeblendDonePaintScreen);  //we must damage the screen every time
-    WRAP (ebs, screen, paintWindow,    edgeblendPaintWindow);
+    //WRAP (ebs, screen, paintWindow,    edgeblendPaintWindow);
 
     //damage screen to init edgeblend
     damageScreen (screen);
@@ -527,11 +525,11 @@ edgeblendFiniScreen (CompPlugin *plugin, CompScreen *screen)
     EDGEBLEND_SCREEN (screen);
 
     //Restore the original functions
-    UNWRAP (ebs, screen, paintScreen);
+    //UNWRAP (ebs, screen, paintScreen);
     //UNWRAP (ebs, screen, preparePaintScreen);
     UNWRAP (ebs, screen, paintOutput);
     UNWRAP (ebs, screen, donePaintScreen);
-    UNWRAP (ebs, screen, paintWindow);
+    //UNWRAP (ebs, screen, paintWindow);
     //UNWRAP (ebs, s, paintTransformedOutput);
     
 
