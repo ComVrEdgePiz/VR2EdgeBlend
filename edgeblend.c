@@ -1,11 +1,8 @@
 /*
- * Compiz edgeblending plugin
+ * File:   edgeblend.c
+ * Author: Markus Knofe, Alexander Treptow
  *
- * edgeblend.c
- *
- * Copyright : (C) 2009 by Alexander Treptow, Markus Knofe
- * E-mail    : 
- *
+ * Created on May 05, 2010, 2:43 PM
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
  */
 #include "edgeblend.h"
 

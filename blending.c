@@ -1,14 +1,22 @@
+/*
+ * File:   blending.c
+ * Author: Markus Knofe, Alexander Treptow
+ *
+ * Created on May 05, 2010, 2:43 PM
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 #include "blending.h"
 #include "tga.h"
 #include <stdlib.h>
-
-/* TODO
- * 
- * - blending in ecken anstaendig ueberlagern
- * - mit funktionen blenden, lineare, 2. grades
- * - evtl. farben blenden / farbkorrektur
- * - tga speichern / laden
- */
 
 /*
 #define WHITE 0.0
