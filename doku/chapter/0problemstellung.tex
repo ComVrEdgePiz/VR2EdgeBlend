@@ -14,8 +14,8 @@ Aus dieser Überschneidung ergeben sich zwei Hauptsächliche Probleme. Zum Einen w
 Auf den in der FH-Wedel vorhandenen Cave trifft dieses Problem nicht zu, da hier nur ein Beamer zur Zeit je eine Projektionsfläche bestrahlt. Allerdings bei Anwendungen wie der CoBench, die sehr stark auf Interaktivität setzt und zwei Beamer für eine Fläche benötigt treten die Probleme auf. In verstärkter Form treten die Probleme bei sphärischen Projektionen mit mehreren Beamern auf, da hier die Überlappungen selbst mit komplexen Linsensystemen nur unter größtem Aufwand gering gehalten werden können.
 
 \section{Projektidee}
-Im Rahmen dieses Projektes soll daher ein Plug-In entstehen, welches Überschneidungen aus einem Bild herausrechnet und die Helligkeit der Überlappungsbereiche so anpasst, dass diese nicht mehr Wahrnehmbar sind. Das Plug-In soll einfach und nach Möglichkeiten auch interaktiv konfigurierbar sein. Im ersten Schritt sollen theoretisch beliebig viele an ihren Vertikalen verknüpfte Bildschirme übergeblendet werden können.
-\todo{Vektor nicht GRID/Array?}
+Im Rahmen dieses Projektes soll daher ein Plug-In entstehen, welches Überschneidungen aus einem Bild herausrechnet und die Helligkeit der Überlappungsbereiche so anpasst, dass diese nicht mehr Wahrnehmbar sind. Das Plug-In soll einfach und nach Möglichkeiten auch interaktiv konfigurierbar sein. Es sollen theoretisch beliebig viele an ihren Vertikalen und Horizontalen verknüpfte Bildschirme übergeblendet werden können. Diese Bilden in der Regel ein Array.%Im ersten Schritt sollen theoretisch beliebig viele an ihren Vertikalen verknüpfte Bildschirme übergeblendet werden können.
+%\todo{Vektor nicht GRID/Array?}
 
 \section{Anforderungen}
 Die folgenden zwei Abschnitte legen fest was zu diesem Projekt gehört und wo die Abgrenzungen liegen.
@@ -27,7 +27,7 @@ Es ist ein Plug-In oder Vergleichbares für die Unixplattform entwickelt werden, 
 
 Das Plug-In muss über eine XML-Datei oder eine Datei in einem ähnlichen leicht zu bearbeitenden Format zu konfigurieren sein. Das Plug-In muss zwei Bilder, für zwei verschiedene Ausgabegeräte, die in den Grafikspeicher gerendert wurden, so bearbeiten, dass die Bilder auf diesen Ausgabegeräten als eines erscheinen.
 
-Dafür ist es nötig die Helligkeit im Bereich der Überlappung anzupassen, der überlappende Bereich wird durch die Konfiguationsdatei vorgegeben. Ebenso muss das Bild passend zugeschnitten werden, so dass Objekte nicht abgeschnitten werden oder doppelt ausgegeben werden. Es kann dabei davon ausgegangen werden, dass die zwei Bilder nebeneinander Platziert sind.
+Dafür ist es nötig die Helligkeit im Bereich der Überlappung anzupassen, der überlappende Bereich wird durch die Konfiguationsdatei vorgegeben. Ebenso muss das Bild passend zugeschnitten werden, so dass Objekte nicht abgeschnitten werden oder doppelt ausgegeben werden. Es kann dabei davon ausgegangen werden, dass je zwei Bilder angrenzend zueinander platziert sind.
 
 Die Definition der Überlappung ist nicht zwingend eine Gerade, sondern kann theoretisch eine beliebige Funktion sein. Sie wird sich aber immer auf eine Konkave oder Konvexe Form und maximal eine Ecke abbilden lassen. Daher wird die komplexeste Form der Überschneidungsdefinition voraussichtlich eine Gerade sein, die über eine Ecke mit einem Polygon zweiten Grades verbunden ist.  Die Definition muss natürlich je Ausgabegerät und je Seite, die eine Überlappung enthält vorhanden sein.
 
@@ -37,7 +37,7 @@ Des Weiteren soll überprüft werden in wie weit es möglich ist das Plug-In in wel
 Die im Folgenden genannten Anforderungen sollen explizit nicht umgesetzt werden.
 
 Die Funktionalität des Plug-In beschränkt sich auf ein Gerät. Das heißt, dass das Plug-In nicht mehrere Ressourcen verwaltet oder über das Netzwerk kommuniziert sondern ausschließlich im Speicher eines Rechners arbeitet. Es wird nicht dafür ausgelegt sein die Berechnung auf mehrere Computer zu verteilen.
-\todo{Vektor nicht GRID/Array?}
-Das Plug-In wird ausschließlich an den Vertikalen verknüpfte "Screens" bearbeiten, also zwischen diesen die Helligkeit überblenden und Pixelinterferenzen herausarbeiten. Die Bilder der einzelnen Beamer können nicht zusätzlich übereinander also an den horizontalen verknüpft werden. Daraus ergibt sich, dass das Plug-In die Anordnung der Beamer als Array nicht unterstützt sondern lediglich Anordnungen als Vektor.
+%\todo{Vektor nicht GRID/Array?}
+Das Plug-In wird ausschließlich in einem Array verknüpfte "`Screens"' bearbeiten, also zwischen diesen die Helligkeit überblenden und Pixelinterferenzen herausarbeiten. Die Bilder der einzelnen Beamer können so neben- und übereinander verknüpft werden.% Daraus ergibt sich, dass das Plug-In die Anordnung der Beamer als Array nicht unterstützt sondern lediglich Anordnungen als Vektor.
 
 Die Implementierung des Plug-Ins für das Betriebssystem Windows ist ebenfalls nicht Bestandteil dieses Projektes. Lediglich die Nachforschungen ob und wie es möglich ist.

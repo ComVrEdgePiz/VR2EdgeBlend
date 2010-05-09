@@ -5,6 +5,7 @@ In diesem Abschnitt werden die wesentlichen Bestandteile des Plug-In beschrieben
 
 \subsection{Ansprechen der Ausgabegeräte}
 Hinter diesem Punkt verbirgt sich die Beschreibung der verwendeten Methoden um die Bilddaten zu manipulieren und eine ansonsten normale Funktionalität des Betriebssystems zu gewährleisten.
+
 \subsubsection{Analyse}
 Die Konfiguration welcher Bereich von welchem Ausgabegerät dargestellt wird, erfolgt über den X-Server, ebenso wie die Auswertung des User-Inputs, das Zeichnen des Mousezeigers, die Verwaltung der Programmfenster und des Arbeitsbereiches.
 
@@ -75,5 +76,28 @@ Die Abbildung 3.1 veranschaulicht die hier besprochenen Schritte.
 
 \subsection{Generieren der Blending-Maske}
 Nachdem im vorherigen Abschnitt beschrieben wurde, wie die erzeugte Maske mit der eigentlichen Benutzeroberfläche zusammengefügt wird, beschreibt dieser Abschnitt wie die Maske erstellt wird.
+Resultierend muss die Maske als Grafik vorliegen, die über jeden Output geblendet werden kann. Daher muss entweder pro Ausgabegerät eine Maske erzeugt werden oder eine die über alle Ausgaben angewendet werden kann. Die Konfiguration lässt hier für den Blending-Verlauf pro Seite eines Screens eine Funktion 2. Grades zu. Dies sind die Restriktionen, die für das Generieren der Maske gelten.
+
 \subsubsection{Analyse}
+Die beiden Möglichkeiten zur Generierung der Maske sind über
+\begin{enumerate}
+  \item absolute Funktionen und Relationen oder
+  \item relative Funktionen möglich.
+\end{enumerate}
+
+Absolute Funktionen für die obere und untere Kante, sowie Relationen für die linke und rechte Kante des Screens sind unpraktikabel, da nicht davon ausgegangen werden kann, dass es immer eindeutige links-rechts, oben-unten zuordnungen gibt. Zudem ist es für den konfigurierenden Benutzer nicht so einfach die gewünschten Funktionen und Relationen zu erstellen wie in der zweiten Möglichkeit.
+
+Die Funktionen relativ zur jeweiligen Seite zu erstellen, mit der Seite als X-Koordinate und dem linken Ende als Nullpunkt ist wesentlich intuitiver.
+
+Eine zusätzliche unabhängige Möglichkeit kann dadurch gegeben werden, dass ein Bild eingelesen wird welches beliebig durch ein Grafikbearbeitungsprogramm manipuliert werden kann.
+
+
 \subsubsection{Realisation}
+Gewählt wurde der intuitivere Ansatz der relativen Funktionen und die unabhängige Möglichkeit die Maske direkt vorzugeben. So wird jede Seite jedes Screen die jeweilige Funktion aus der Konfiguration entnommen. Die Errechnung des Blending-Wertes geschieht durch vertauschen der Koordinaten, so dass das linke Ende einer Seite den Nullpunkt im Koordinatensystem darstellt. Es lassen sich mit einigen Additionen und Subtraktionen die Funktionen auf die vier Seiten eines Screens abbilden.
+
+Für die Manipulation der Helligkeit muss einzig der Alpha-Wert angepasst werden. Die anderen drei Werte werden nicht angepasst. Bei der Anpassung wird dabei pro Pixel errechnet ob dieser unterhalb einer Funktion liegt und dem entsprechend wird Anteilig zwischen dem Außenrand des Screen und der Funktion der Alpha-Wert gesetzt. An den Ecken müssen diese Werte natürlich verrechnet werden, wenn der betreffende Pixel unterhalb zweier Funktionen liegt.
+
+Wenn $f$ die Blendingfunktion und $p$ der aktuell betrachtete Pixel ist. $a$, $b$ und $c$ $f$ als $f(x) = a*x^2 + b*x + c$ definieren und $p_y < f(p_x)$ ist, dann ist $p_alpha = (f(p_x) - p_y) / f(p_x)$ (natürlich nur für $f(p_x) > 0$).
+
+Da die Bilddaten auf Wunsch direkt abgelegt werden können, sind diese auch für exotischere Projektionsoberflächen manipulierbar. Obwohl mit einer Funktion 2. Grades pro Screen-Kante selbst Edgeblending bei Halbkugeln kein Problem ist.
+Wenn die Maske nicht aus der Datei gelesen wird dauert das Starten des Plug-In länger, da sie komplett erstellt werden muss.
