@@ -1,64 +1,39 @@
 <output>
     <grid>
-        <rows>2</rows>
+        <rows>1</rows>
         <cols>2</cols>
         <blend>100</blend>
         <cell>
-            <width>1280</width>
-            <height>512</height>
+            <width>512</width>
+            <height>768</height>
         </cell>
     </grid>
     <screens>
         <screen>
             <left><c>0</c></left>
             <top><c>0</c></top>
-            <right><c>100</c></right>
-            <bottom><c>100</c></bottom>
+            <right><c>20</c></right>
+            <bottom><c>10</c></bottom>
         </screen>
         <screen>
-            <left><c>100</c></left>
+            <left><a>0.0002</a><c>20</c></left>
             <top><c>0</c></top>
             <right><c>0</c></right>
-            <bottom><c>100</c></bottom>
+            <bottom><c>0</c></bottom>
         </screen>
         <screen>
             <left><c>0</c></left>
-            <top><c>100</c></top>
-            <right><c>100</c></right>
+            <top><c>10</c></top>
+            <right><c>10</c></right>
             <bottom><c>0</c></bottom>
         </screen>
         <screen>
-            <left><c>100</c></left>
-            <top><c>100</c></top>
-            <right><c>0</c></right>
-            <bottom><c>0</c></bottom>
-        </screen>
-        
-        <screen>
-            <left><c>0</c></left>
-            <top><c>100</c></top>
-            <right><c>100</c></right>
-            <bottom><c>0</c></bottom>
-        </screen>
-        <screen>
-            <left><c>100</c></left>
-            <top><c>100</c></top>
-            <right><c>100</c></right>
-            <bottom><c>0</c></bottom>
-        </screen>
-        <screen>
-            <left><c>100</c></left>
-            <top><c>100</c></top>
-            <right><c>100</c></right>
-            <bottom><c>0</c></bottom>
-        </screen>
-        <screen>
-            <left><c>100</c></left>
-            <top><c>100</c></top>
+            <left><c>10</c></left>
+            <top><c>10</c></top>
             <right><c>0</c></right>
             <bottom><c>0</c></bottom>
         </screen>
     </screens>
-    <!-- <image>/home/vr2/vr2/test.tga</image> -->
+    <image>/home/vr2/vr2/test.tga</image>
 </output>
 

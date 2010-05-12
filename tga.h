@@ -52,6 +52,8 @@ TGA* texToTGA(GLfloat* tex, int width, int height);
 
 void tgaToTex(TGA* img, GLfloat* tex);
 
+unsigned char* getEmptyRaw(int width, int height);
+
 #ifdef	__cplusplus
 }
 #endif

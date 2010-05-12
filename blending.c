@@ -42,20 +42,36 @@ blendFunct(int x, int y, double a, double b, double c) {
     ? INV_BLEND_LINEAR(a*x*x+c, y)//a*x^2+c
     : INV_BLEND_LINEAR(a*x*x+b*x+c, y)//a*x^2+b*x+c
   ;
+}*/
+
+double
+fx(int x, double a, double b, double c) {
+ return
+  (a==0.0)
+  ?(b==0.0)
+    ? c
+    : b*x + c
+  :(b==0.0)
+    ? a*x*x + c
+    : a*x*x + b*x + c
+  ;
 }
-*/
+
+
 Bool generateBlendingTexture(edgeblendScreen *screen)
 {
     int displayWidth, displayHeight, cellWidth, cellHeight;
     int pixelArraySize;
-    int i,j, arrayPos, posX,posY;
+    int i,j, arrayPos, posX,posY, py;
     int colorspace = 4;
     int output = 0, outputRow;
     div_t divHoriz, divVert;
     GLfloat* pixel;
     GLuint texture;
+    double y=0.0;
     EdgeblendOutputScreen cell;
     TGA* tga=0;
+    Bool loadFromImage = FALSE;
 
     displayWidth    = screen->orginalWorkarea.orginalWidth;
     displayHeight   = screen->orginalWorkarea.orginalHeight;
@@ -79,8 +95,20 @@ Bool generateBlendingTexture(edgeblendScreen *screen)
     screen->testtex = texture;
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture);
     //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    
+    if(screen->outputCfg->imagepath != NULL){
+      FILE* f = fopen(screen->outputCfg->imagepath, "r");
+      if(f != NULL){
+        fclose(f);
+      compLogMessage ("blending->generateBlendingTexture: ", CompLogLevelInfo,
+                      "test loaded image file");
+        loadFromImage = TRUE;
+      }
+    }
 
-    if(screen->outputCfg->imagepath == NULL) {
+    if(! loadFromImage) {
+      compLogMessage ("blending->generateBlendingTexture: ", CompLogLevelInfo,
+                      "generating image");
       //forloopings
       for (i=0; i < displayHeight; i++)
       {
@@ -97,22 +125,45 @@ Bool generateBlendingTexture(edgeblendScreen *screen)
               
               cell = screen->outputCfg->screens[output];
 
-              arrayPos = (i * displayWidth + j) * colorspace;/*
-              pixel[arrayPos + 3] = blendFunct(posY, posX, cell.left.a, cell.left.b, cell.left.c);
-              pixel[arrayPos + 3] = blendFunct(posY, cellWidth-posX, cell.right.a, cell.right.b+, cell.right.c);
-              pixel[arrayPos + 3] = blendFunct(posX, posY, cell.top.a, cell.top.b, cell.top.c);
-              pixel[arrayPos + 3] = blendFunct(posX, cellHeight-posY, cell.bottom.a, cell.bottom.b, cell.bottom.c);*/
-              if ((posX - cell.left.c) < 0) {
+              arrayPos = (i * displayWidth + j) * colorspace;
+
+              // left
+              y = fx(posY, cell.left.a, cell.left.b, cell.left.c);
+              if((posX - y) < 0) {
+                pixel[arrayPos + 3] = (GLfloat) ((y - posX) / y);
+              }
+//              pixel[arrayPos + 3] = blendFunct(posY, posX, cell.left.a, cell.left.b, cell.left.c);
+              // right
+              y = fx(posY, cell.right.a, cell.right.b, cell.right.c);
+              py = cellWidth - posX;
+              if((py - y) < 0) {
+                pixel[arrayPos + 3] = (GLfloat) ((y - py) / y);
+              }
+//              pixel[arrayPos + 3] = blendFunct(posY, cellWidth-posX, cell.right.a, cell.right.b, cell.right.c);
+
+              // top
+              y = fx(posX, cell.top.a, cell.top.b, cell.top.c);
+              if((posY - y) < 0) {
+                pixel[arrayPos + 3] += (GLfloat) ((y - posY) / y);
+              }
+//              pixel[arrayPos + 3] = blendFunct(posX, posY, cell.top.a, cell.top.b, cell.top.c);
+              // bottom
+              y = fx(posX, cell.bottom.a, cell.bottom.b, cell.bottom.c);
+              py = cellHeight - posY;
+              if((py - y) < 0) {
+                pixel[arrayPos + 3] += (GLfloat) ((y - py) / y);
+              }
+              /*if ((posX - cell.left.c) < 0) { // left
                   pixel[arrayPos + 3] = (GLfloat) ((cell.left.c-posX) / (GLfloat)cell.left.c);
-              } else if((posX + cell.right.c) >= cellWidth) {
+              } else if((posX + cell.right.c) >= cellWidth) { // right
                   pixel[arrayPos + 3] = (GLfloat) ((cell.right.c+posX-cellWidth) / (GLfloat)cell.right.c);
               }
               // TODO += is bad blending for grids, find a better one
-              if((posY - cell.top.c) < 0) {
+              if((posY - cell.top.c) < 0) { // top
                   pixel[arrayPos + 3] += (GLfloat) ((cell.top.c-posY) / (GLfloat)cell.top.c);
-              } else if((posY + cell.bottom.c) >= cellHeight) {
+              } else if((posY + cell.bottom.c) >= cellHeight) { // bottom
                   pixel[arrayPos + 3] += (GLfloat) ((cell.bottom.c+posY-cellHeight) / (GLfloat)cell.bottom.c);
-              }
+              }*/
 
           }
       }
@@ -120,9 +171,11 @@ Bool generateBlendingTexture(edgeblendScreen *screen)
       //save texture
       tga = texToTGA(pixel, displayWidth, displayHeight);
       if(tga != NULL)
-        writeTGA(tga, "/home/vr2/vr2/test.tga");
+        writeTGA(tga, screen->outputCfg->imagepath);
         
     } else { // imagepath not null
+      compLogMessage ("blending->generateBlendingTexture: ", CompLogLevelInfo,
+                      "loading image from: %s", screen->outputCfg->imagepath);
     
       tga = readTGA(screen->outputCfg->imagepath);
 

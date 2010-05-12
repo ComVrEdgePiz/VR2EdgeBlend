@@ -32,6 +32,7 @@ extern "C" {
     Bool generateBlendingTexture(edgeblendScreen *screen);
     void blend(edgeblendScreen *screen);
     void freeBlendingTexture(edgeblendScreen *screen);
+    double fx(int x, double a, double b, double c);
 
 
 #ifdef	__cplusplus

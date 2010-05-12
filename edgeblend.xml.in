@@ -21,7 +21,7 @@
           <_short>Config File</_short>
           <_long>Config File.</_long>
           <hints>file;</hints>
-          <default>/home/flatline/VR2EdgeBlend/two_head.xml</default>
+          <default>/home/vr2/vr2/VR2EdgeBlend/two_head.xml</default>
         </option>
       </group>
       <group>
