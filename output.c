@@ -42,14 +42,12 @@ void buildOutput(edgeblendScreen * ebs)
 
             if (rposx != 0 || rposy != height)
             {
-   
                 glRasterPos2i( rposx, rposy);
                 glCopyPixels( cposx, cposy, width, height, GL_COLOR);
-
             }
         }
     }
     //glLineWidth(4.0); glColor3f(.3, .3, .3); glBegin(GL_LINES); glVertex2i(0, rows*height); glVertex2i(cols * width, 0); glEnd();
-    //glLineWidth(4.0); glColor3f(.9, .3, .9); glBegin(GL_LINES); glVertex2i(0, 0); glVertex2i(cols * width, rows*height); glEnd();
+    //lLineWidth(4.0); glColor3f(.9, .3, .9); glBegin(GL_LINES); glVertex2i(0, 0); glVertex2i(cols * width, rows*height); glEnd();
 
 }

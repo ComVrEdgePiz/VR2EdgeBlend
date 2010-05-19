@@ -39,7 +39,7 @@ fix_XDesktopSize (CompScreen * screen, edgeblendScreen * ebs)
     width  = ebs->outputCfg->grid.cols * ebs->outputCfg->cell.width  - (ebs->outputCfg->grid.blend * (ebs->outputCfg->grid.cols-1));
     height = ebs->outputCfg->grid.rows * ebs->outputCfg->cell.height - (ebs->outputCfg->grid.blend * (ebs->outputCfg->grid.rows-1));
 
-    compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo,"%d x %d", width, height);
+    //compLogMessage ("edgeblend::fix_env->XDesktop", CompLogLevelInfo,"%d x %d", width, height);
 
     data[0] = (unsigned long) width;
     data[1] = (unsigned long) height;
@@ -192,7 +192,9 @@ fix_CompWindowDocks(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
             dy = overlap * ((rowsBefore == 0) ? 0 : rowsBefore-1) * (((mode == TRUE) ? -1 : 1));
 
             compLogMessage ("SCREEN", CompLogLevelInfo,"window: dx/dy=%d/%d   %d %d  %d", dx,dy, colsBefore, rowsBefore, w->serverY);
-            //@TODO RESIZE WIDTH AND HEIGHT + overlap IF BIGGER THAN AVALIBLE SPACE     //w->serverWidth -= 30;  //updateWindowSize(w);
+            //@TODO RESIZE WIDTH AND HEIGHT + overlap IF BIGGER THAN AVALIBLE SPACE  - no function found.... for this all avalible won't do
+            // what they should
+            //w->serverWidth -= 30;  //updateWindowSize(w);
             moveWindow(w, dx, dy, TRUE, TRUE);
             syncWindowPosition(w);
         }
@@ -256,19 +258,20 @@ fix_CompScreenWorkarea(CompScreen *screen, edgeblendScreen * ebs, Bool mode)
                 screen->outputDev[i].region.extents.x1 = col * width;// - (col+colsPerScreen-1) * overlap;
                 screen->outputDev[i].region.extents.x2 = (col+colsPerScreen) * width - (col+colsPerScreen-1) * overlap;
             } else {
+                //do nothing since windows should be able to move a bit out of the right screen
                 //screen->outputDev[i].region.extents.x2 = (col+rowsPerScreen) * width - (col+colsPerScreen-1) * overlap;
             }
             if (row >0){
                 screen->outputDev[i].region.extents.y1 = row * height;
-                screen->outputDev[i].region.extents.y2 = (row+2) * height - (row+rowsPerScreen-1) * overlap;
+                screen->outputDev[i].region.extents.y2 = (row+rowsPerScreen) * height - (row+rowsPerScreen-1) * overlap;
             } else {
                 screen->outputDev[i].region.extents.y2 = (row+rowsPerScreen) * height - (row+rowsPerScreen-1) * overlap;
             }
 
         } 
         //disable for compiz viewport in 2D stay the same..
-        //screen->width  = (width  * cols) - ((cols-1) * overlap);
-        //screen->height = (height * rows) - ((rows-1) * overlap);
+        //screen->width  = (ebs->outputCfg->cell.width  * ebs->outputCfg->grid.cols) - ((ebs->outputCfg->grid.cols-1) * ebs->outputCfg->grid.blend);
+        //screen->height = (ebs->outputCfg->cell.height * ebs->outputCfg->grid.rows) - ((ebs->outputCfg->grid.rows-1) * ebs->outputCfg->grid.blend);
         
     } else {
         restore_CompScreenWorkArea(screen, ebs);

@@ -12,24 +12,11 @@
     <display>
       <group>
         <_short>Main</_short>
-        <option name="reload" type="key">
-          <_short>Reload</_short>
-          <_long>Force a config reload.</_long>
-          <default>&lt;Control&gt;F11</default>
-        </option>
         <option name="Config" type="string">
           <_short>Config File</_short>
           <_long>Config File.</_long>
           <hints>file;</hints>
-          <default>/home/vr2/vr2/VR2EdgeBlend/two_head.xml</default>
-        </option>
-      </group>
-      <group>
-        <_short>devel</_short>
-        <option name="ShowAreas" type="bool">
-          <_short>shows areas</_short>
-          <_long>shows areas</_long>
-          <default>false</default>
+          <default>/home/flatline/VR2EdgeBlend/two_head.xml</default>
         </option>
       </group>
     </display>

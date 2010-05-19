@@ -265,21 +265,31 @@ edgeblendDonePaintScreen (CompScreen * screen)
  */
 static void
 edgeblendHandleEvent (CompDisplay * display, XEvent * event)
-{  
+{
     EDGEBLEND_DISPLAY (display);
     CompScreen *screen = display->screens;
+    EDGEBLEND_SCREEN (screen);
+    int width  = (ebs->outputCfg->cell.width  * ebs->outputCfg->grid.cols) - ((ebs->outputCfg->grid.cols-1) * ebs->outputCfg->grid.blend);
+    int height = (ebs->outputCfg->cell.height * ebs->outputCfg->grid.rows) - ((ebs->outputCfg->grid.rows-1) * ebs->outputCfg->grid.blend);
+    int oldWidth  = screen->width;
+    int oldHeight = screen->height;
   //  EDGEBLEND_SCREEN (screen);
 
     //since we support only one screen we can assume the firstone in the
     //correct one
     //for (screen = display->screens; screen; screen = screen->next) {
         //see display.c:2701 void warpPointer (CompScreen *s, int dx,int dy);
-        if (pointerX > screen->width || pointerY > screen->height)
+        if (pointerX > width || pointerY > height || pointerX < 0 || pointerY < 0) {
+            screen->width  = width;
+            screen->height = height;
             warpPointer(screen, 0,0);
+            screen->width  = oldWidth;
+            screen->height = oldHeight;
+        }
     //}
 
     /**
-     * @TODO react on Cursor-Change Event
+     * @better react on Cursor-Change Event
      */
     
     
@@ -595,17 +605,9 @@ edgeblendInitDisplay (CompPlugin  *plugin, CompDisplay *display)
 
     /* BCOP - Notify-Hooks */
     edgeblendSetConfigNotify    (display, &edgeblendNotifyCallback);
-    edgeblendSetReloadNotify    (display, &edgeblendNotifyCallback);
-    edgeblendSetShowareasNotify (display, &edgeblendNotifyCallback);
 
     /* WRAP */
     WRAP (ebd, display, handleEvent, edgeblendHandleEvent); //handle X Events
-
-    /* add reload hook 
-     * @TODO -  build real handler for this, since it must do more then load the config,
-     *          like resize XDesktop, update cursor...
-     */
-    edgeblendSetReloadInitiate (display, edgeblendLoadConfig);
 
     display->base.privates[displayPrivateIndex].ptr = ebd;
     return TRUE;
@@ -623,8 +625,6 @@ edgeblendFiniDisplay (CompPlugin  *plugin, CompDisplay *display)
     compLogMessage ("edgeblend", CompLogLevelInfo, "edgeblendFiniDisplay called");
     EDGEBLEND_DISPLAY (display);
 
-    /** remove hook */
-    edgeblendSetReloadTerminate (display, edgeblendLoadConfig);
 
     /* UNWRAP */
     UNWRAP (ebd, display, handleEvent);

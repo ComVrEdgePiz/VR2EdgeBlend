@@ -1,11 +1,11 @@
 <output>
     <grid>
-        <rows>1</rows>
+        <rows>2</rows>
         <cols>2</cols>
         <blend>100</blend>
         <cell>
-            <width>512</width>
-            <height>768</height>
+            <width>640</width>
+            <height>512</height>
         </cell>
     </grid>
     <screens>
@@ -13,27 +13,26 @@
             <left><c>0</c></left>
             <top><c>0</c></top>
             <right><c>20</c></right>
-            <bottom><c>10</c></bottom>
+            <bottom><c>20</c></bottom>
         </screen>
         <screen>
-            <left><a>0.0002</a><c>20</c></left>
+            <left><a>0.0002</a><b>0.0002</b><c>20</c></left>
             <top><c>0</c></top>
             <right><c>0</c></right>
-            <bottom><c>0</c></bottom>
+            <bottom><c>20</c></bottom>
         </screen>
         <screen>
             <left><c>0</c></left>
-            <top><c>10</c></top>
-            <right><c>10</c></right>
+            <top><c>20</c></top>
+            <right><c>20</c></right>
             <bottom><c>0</c></bottom>
         </screen>
         <screen>
-            <left><c>10</c></left>
-            <top><c>10</c></top>
+            <left><c>20</c></left>
+            <top><c>20</c></top>
             <right><c>0</c></right>
             <bottom><c>0</c></bottom>
         </screen>
     </screens>
-    <image>/home/vr2/vr2/test.tga</image>
 </output>
 
