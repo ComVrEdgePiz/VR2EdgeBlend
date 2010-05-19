@@ -105,7 +105,19 @@ Bool generateBlendingTexture(edgeblendScreen *screen)
         loadFromImage = TRUE;
       }
     }
+    
+    if (loadFromImage) {
+      compLogMessage ("blending->generateBlendingTexture: ", CompLogLevelInfo,
+                      "loading image from: %s", screen->outputCfg->imagepath);
+    
+      tga = readTGA(screen->outputCfg->imagepath);
 
+      if(tga)
+        tgaToTex(tga, pixel);
+      else // failed to load image
+        loadFromImage = FALSE;
+    }
+    
     if(! loadFromImage) {
       compLogMessage ("blending->generateBlendingTexture: ", CompLogLevelInfo,
                       "generating image");
@@ -173,14 +185,6 @@ Bool generateBlendingTexture(edgeblendScreen *screen)
       if(tga != NULL)
         writeTGA(tga, screen->outputCfg->imagepath);
         
-    } else { // imagepath not null
-      compLogMessage ("blending->generateBlendingTexture: ", CompLogLevelInfo,
-                      "loading image from: %s", screen->outputCfg->imagepath);
-    
-      tga = readTGA(screen->outputCfg->imagepath);
-
-      if(tga)
-        tgaToTex(tga, pixel);
     }
     
     if(pixel) {
